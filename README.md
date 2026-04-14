@@ -42,9 +42,3 @@ Deploy:
 npm run deploy:sepolia
 ```
 
-## Catatan Keamanan
-- Jangan commit `local.properties` dan `.env`.
-- Jangan bagikan private key.
-
-## License
-Untuk kebutuhan tugas/portfolio.
