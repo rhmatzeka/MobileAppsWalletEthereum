@@ -1,0 +1,8 @@
+## Copy values into local.properties on your own machine.
+## Android does not usually use .env directly inside the app module.
+## The common mobile-native equivalent is local.properties -> BuildConfig.
+
+sdk.dir=C\:\\Users\\YOUR_USER\\AppData\\Local\\Android\\Sdk
+DEFAULT_ETH_NETWORK=sepolia
+INFURA_PROJECT_ID=your_infura_project_id
+ETHERSCAN_API_KEY=your_etherscan_api_key

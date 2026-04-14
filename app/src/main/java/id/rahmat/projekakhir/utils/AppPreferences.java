@@ -1,0 +1,49 @@
+package id.rahmat.projekakhir.utils;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+
+public class AppPreferences {
+
+    public static final String NETWORK_SEPOLIA = "sepolia";
+    public static final String NETWORK_MAINNET = "mainnet";
+
+    private static final String PREFS_NAME = "mats_wallet_prefs";
+    private static final String KEY_ONBOARDING_DONE = "key_onboarding_done";
+    private static final String KEY_BIOMETRIC_ENABLED = "key_biometric_enabled";
+    private static final String KEY_SELECTED_NETWORK = "key_selected_network";
+
+    private final SharedPreferences sharedPreferences;
+
+    public AppPreferences(Context context) {
+        sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    }
+
+    public boolean isOnboardingDone() {
+        return sharedPreferences.getBoolean(KEY_ONBOARDING_DONE, false);
+    }
+
+    public void setOnboardingDone(boolean completed) {
+        sharedPreferences.edit().putBoolean(KEY_ONBOARDING_DONE, completed).apply();
+    }
+
+    public boolean isBiometricEnabled() {
+        return sharedPreferences.getBoolean(KEY_BIOMETRIC_ENABLED, false);
+    }
+
+    public void setBiometricEnabled(boolean enabled) {
+        sharedPreferences.edit().putBoolean(KEY_BIOMETRIC_ENABLED, enabled).apply();
+    }
+
+    public String getSelectedNetwork() {
+        return sharedPreferences.getString(KEY_SELECTED_NETWORK, NETWORK_SEPOLIA);
+    }
+
+    public void setSelectedNetwork(String network) {
+        sharedPreferences.edit().putString(KEY_SELECTED_NETWORK, network).apply();
+    }
+
+    public void clearSession() {
+        sharedPreferences.edit().clear().apply();
+    }
+}

@@ -1,0 +1,30 @@
+<resources>
+    <style name="Base.Theme.ProjekAkhir" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/mw_highlight</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/mw_accent</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+        <item name="colorSecondary">@color/mw_accent</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSecondaryContainer">@color/mw_secondary</item>
+        <item name="colorOnSecondaryContainer">@color/white</item>
+        <item name="colorSurface">@color/mw_surface</item>
+        <item name="colorOnSurface">@color/mw_text_primary</item>
+        <item name="colorSurfaceContainer">@color/mw_surface_elevated</item>
+        <item name="colorOnSurfaceVariant">@color/mw_text_secondary</item>
+        <item name="android:colorBackground">@color/mw_background</item>
+        <item name="colorOnBackground">@color/mw_text_primary</item>
+        <item name="colorError">@color/mw_error</item>
+        <item name="colorOutline">@color/mw_divider</item>
+        <item name="android:windowBackground">@drawable/bg_app_gradient</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@color/mw_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="bottomNavigationStyle">@style/Widget.MatsWallet.BottomNavigation</item>
+        <item name="materialButtonStyle">@style/Widget.MatsWallet.Button.Primary</item>
+        <item name="textInputStyle">@style/Widget.MatsWallet.TextInputLayout</item>
+    </style>
+</resources>

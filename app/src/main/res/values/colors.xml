@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mw_primary">#1A1A2E</color>
+    <color name="mw_secondary">#16213E</color>
+    <color name="mw_accent">#0F3460</color>
+    <color name="mw_highlight">#E94560</color>
+    <color name="mw_background">#0D0D0D</color>
+    <color name="mw_background_soft">#141414</color>
+    <color name="mw_surface">#181C2B</color>
+    <color name="mw_surface_elevated">#20263A</color>
+    <color name="mw_surface_glass">#26FFFFFF</color>
+    <color name="mw_surface_glass_stroke">#33FFFFFF</color>
+    <color name="mw_text_primary">#FFFFFF</color>
+    <color name="mw_text_secondary">#B0B0B0</color>
+    <color name="mw_success">#3DD598</color>
+    <color name="mw_warning">#F5A623</color>
+    <color name="mw_error">#FF5C74</color>
+    <color name="mw_line_chart">#66A9FF</color>
+    <color name="mw_divider">#24FFFFFF</color>
+    <color name="mw_chip_selected">#33E94560</color>
+    <color name="mw_bottom_nav">#131826</color>
+    <color name="mw_qr_surface">#F9FAFB</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>

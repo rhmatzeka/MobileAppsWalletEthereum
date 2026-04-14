@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Widget.MatsWallet.Button.Primary" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/mw_highlight</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="cornerRadius">18dp</item>
+        <item name="iconTint">@color/white</item>
+    </style>
+
+    <style name="Widget.MatsWallet.Button.Secondary" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="strokeColor">@color/mw_divider</item>
+        <item name="android:textColor">@color/mw_text_primary</item>
+        <item name="cornerRadius">18dp</item>
+        <item name="iconTint">@color/mw_text_primary</item>
+    </style>
+
+    <style name="Widget.MatsWallet.Button.Tonal" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/mw_surface_elevated</item>
+        <item name="android:textColor">@color/mw_text_primary</item>
+        <item name="cornerRadius">18dp</item>
+    </style>
+
+    <style name="Widget.MatsWallet.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
+        <item name="android:background">@color/mw_bottom_nav</item>
+    </style>
+
+    <style name="Widget.MatsWallet.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxBackgroundColor">@color/mw_surface</item>
+        <item name="boxStrokeColor">@color/mw_highlight</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.MatsWallet.Medium</item>
+        <item name="hintTextColor">@color/mw_text_secondary</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay" />
+
+    <style name="ShapeAppearanceOverlay.MatsWallet" parent="ShapeAppearanceOverlay" />
+
+    <style name="ShapeAppearanceOverlay.MatsWallet.Medium" parent="ShapeAppearanceOverlay.MatsWallet">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">18dp</item>
+    </style>
+</resources>
