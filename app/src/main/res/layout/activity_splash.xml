@@ -8,17 +8,21 @@
     android:padding="24dp">
 
     <View
-        android:layout_width="240dp"
-        android:layout_height="240dp"
-        android:alpha="0.6"
+        android:layout_width="220dp"
+        android:layout_height="220dp"
+        android:layout_marginTop="42dp"
+        android:layout_marginEnd="-42dp"
+        android:alpha="0.42"
         android:background="@drawable/bg_splash_orb"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <View
-        android:layout_width="220dp"
-        android:layout_height="220dp"
-        android:alpha="0.45"
+        android:layout_width="190dp"
+        android:layout_height="190dp"
+        android:layout_marginStart="-40dp"
+        android:layout_marginBottom="46dp"
+        android:alpha="0.22"
         android:background="@drawable/bg_splash_orb"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -49,38 +53,38 @@
             android:textStyle="bold" />
 
         <FrameLayout
-            android:layout_width="240dp"
-            android:layout_height="240dp"
-            android:layout_marginTop="24dp">
+            android:layout_width="218dp"
+            android:layout_height="218dp"
+            android:layout_marginTop="28dp">
 
             <View
                 android:id="@+id/viewOuterRing"
-                android:layout_width="240dp"
-                android:layout_height="240dp"
+                android:layout_width="218dp"
+                android:layout_height="218dp"
                 android:layout_gravity="center"
                 android:background="@drawable/bg_splash_ring" />
 
             <View
                 android:id="@+id/viewInnerRing"
-                android:layout_width="184dp"
-                android:layout_height="184dp"
+                android:layout_width="164dp"
+                android:layout_height="164dp"
                 android:layout_gravity="center"
                 android:background="@drawable/bg_splash_ring" />
 
             <com.airbnb.lottie.LottieAnimationView
                 android:id="@+id/lottieSplash"
-                android:layout_width="168dp"
-                android:layout_height="168dp"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
                 android:layout_gravity="center"
-                android:alpha="0.82"
+                android:alpha="0.58"
                 app:lottie_autoPlay="true"
                 app:lottie_loop="true"
                 app:lottie_rawRes="@raw/mats_wallet_loader" />
 
             <LinearLayout
                 android:id="@+id/logoCore"
-                android:layout_width="112dp"
-                android:layout_height="112dp"
+                android:layout_width="108dp"
+                android:layout_height="108dp"
                 android:layout_gravity="center"
                 android:background="@drawable/bg_splash_logo_core"
                 android:gravity="center"
@@ -106,10 +110,10 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="20dp"
             android:text="@string/splash_title"
             android:textColor="@color/mw_text_primary"
-            android:textSize="30sp"
+            android:textSize="28sp"
             android:textStyle="bold" />
 
         <TextView

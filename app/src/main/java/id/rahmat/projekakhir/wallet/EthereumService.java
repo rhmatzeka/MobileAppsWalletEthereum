@@ -119,6 +119,22 @@ public class EthereumService {
         return String.valueOf(outputs.get(0).getValue());
     }
 
+    public String getErc721TokenUri(String contractAddress, String tokenId, EthereumNetwork network) throws IOException {
+        Function function = new Function(
+                "tokenURI",
+                Arrays.asList(new Uint256(new BigInteger(tokenId))),
+                Arrays.asList(new TypeReference<Utf8String>() {})
+        );
+        String data = FunctionEncoder.encode(function);
+        Transaction transaction = Transaction.createEthCallTransaction(null, contractAddress, data);
+        EthCall response = getClient(network).ethCall(transaction, DefaultBlockParameterName.LATEST).send();
+        List<Type> outputs = FunctionReturnDecoder.decode(response.getValue(), function.getOutputParameters());
+        if (outputs == null || outputs.isEmpty()) {
+            return "";
+        }
+        return String.valueOf(outputs.get(0).getValue());
+    }
+
     public BigDecimal quoteMatsToEth(BigDecimal matsAmount, EthereumNetwork network) throws IOException {
         return quoteTokenToEth(matsAmount, 18, BuildConfig.MATS_SWAP_POOL_ADDRESS, network);
     }

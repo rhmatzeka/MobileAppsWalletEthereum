@@ -32,6 +32,39 @@
         <item name="hintTextColor">@color/mw_text_secondary</item>
     </style>
 
+    <style name="Widget.MatsWallet.PinSlot" parent="@android:style/Widget.TextView">
+        <item name="android:layout_width">38dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:background">@drawable/bg_pin_slot_empty</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/mw_text_primary</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Widget.MatsWallet.PinKey" parent="@android:style/Widget.TextView">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">64dp</item>
+        <item name="android:layout_columnWeight">1</item>
+        <item name="android:layout_gravity">fill</item>
+        <item name="android:layout_margin">7dp</item>
+        <item name="android:background">@drawable/bg_pin_key</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:foreground">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/mw_text_primary</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Widget.MatsWallet.PinKey.Action" parent="Widget.MatsWallet.PinKey">
+        <item name="android:background">@drawable/bg_pin_key_action</item>
+        <item name="android:textColor">@color/mw_text_secondary</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
     <style name="ShapeAppearanceOverlay" />
 
     <style name="ShapeAppearanceOverlay.MatsWallet" parent="ShapeAppearanceOverlay" />

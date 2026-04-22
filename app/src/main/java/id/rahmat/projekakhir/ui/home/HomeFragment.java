@@ -15,6 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.Legend;
@@ -22,6 +23,7 @@ import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.CandleData;
 import com.github.mikephil.charting.data.CandleDataSet;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import id.rahmat.projekakhir.R;
 import id.rahmat.projekakhir.databinding.FragmentHomeBinding;
@@ -31,10 +33,17 @@ import id.rahmat.projekakhir.ui.send.SendActivity;
 
 public class HomeFragment extends BaseFragment {
 
+    private static final int ASSET_TAB_CRYPTO = 0;
+    private static final int ASSET_TAB_WATCHLIST = 1;
+    private static final int ASSET_TAB_NFTS = 2;
+
     private FragmentHomeBinding binding;
     private HomeViewModel viewModel;
     private TokenAdapter tokenAdapter;
+    private NftAdapter nftAdapter;
     private String currentWalletAddress = "";
+    private int selectedAssetTab = ASSET_TAB_CRYPTO;
+    private java.util.List<NftItem> currentNfts = new java.util.ArrayList<>();
 
     @Nullable
     @Override
@@ -51,6 +60,7 @@ public class HomeFragment extends BaseFragment {
         setupChart();
         setupAssetList();
         setupActions();
+        setupAssetTabs();
         observeState();
         viewModel.refresh();
     }
@@ -73,6 +83,8 @@ public class HomeFragment extends BaseFragment {
         binding.buttonCopyAddress.setOnClickListener(v -> copyWalletAddress());
         binding.buttonShowQr.setOnClickListener(v -> startActivity(new Intent(requireContext(), ReceiveActivity.class)));
         binding.homeSwipeRefresh.setOnRefreshListener(() -> binding.buttonRefresh.performClick());
+        binding.buttonAssetHistory.setOnClickListener(v -> openHistoryTab());
+        binding.buttonAssetFilter.setOnClickListener(v -> showMessage(getString(R.string.asset_filter_message)));
     }
 
     private void copyWalletAddress() {
@@ -91,6 +103,74 @@ public class HomeFragment extends BaseFragment {
         binding.recyclerTokens.setLayoutManager(new LinearLayoutManager(requireContext()));
         tokenAdapter = new TokenAdapter(new java.util.ArrayList<>());
         binding.recyclerTokens.setAdapter(tokenAdapter);
+
+        binding.recyclerNfts.setLayoutManager(new LinearLayoutManager(
+                requireContext(),
+                RecyclerView.HORIZONTAL,
+                false
+        ));
+        nftAdapter = new NftAdapter(new java.util.ArrayList<>());
+        binding.recyclerNfts.setAdapter(nftAdapter);
+    }
+
+    private void setupAssetTabs() {
+        binding.tabCrypto.setOnClickListener(v -> selectAssetTab(ASSET_TAB_CRYPTO));
+        binding.tabWatchlist.setOnClickListener(v -> selectAssetTab(ASSET_TAB_WATCHLIST));
+        binding.tabNfts.setOnClickListener(v -> selectAssetTab(ASSET_TAB_NFTS));
+        selectAssetTab(ASSET_TAB_CRYPTO);
+    }
+
+    private void selectAssetTab(int tab) {
+        selectedAssetTab = tab;
+        if (binding == null) {
+            return;
+        }
+        renderAssetTabs();
+        renderAssetContent();
+    }
+
+    private void renderAssetTabs() {
+        boolean cryptoSelected = selectedAssetTab == ASSET_TAB_CRYPTO;
+        boolean watchlistSelected = selectedAssetTab == ASSET_TAB_WATCHLIST;
+        boolean nftsSelected = selectedAssetTab == ASSET_TAB_NFTS;
+
+        binding.textTabCrypto.setTextColor(getColor(cryptoSelected));
+        binding.textTabWatchlist.setTextColor(getColor(watchlistSelected));
+        binding.textTabNfts.setTextColor(getColor(nftsSelected));
+
+        binding.indicatorTabCrypto.setVisibility(cryptoSelected ? View.VISIBLE : View.INVISIBLE);
+        binding.indicatorTabWatchlist.setVisibility(watchlistSelected ? View.VISIBLE : View.INVISIBLE);
+        binding.indicatorTabNfts.setVisibility(nftsSelected ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    private int getColor(boolean selected) {
+        return androidx.core.content.ContextCompat.getColor(
+                requireContext(),
+                selected ? R.color.mw_text_primary : R.color.mw_text_secondary
+        );
+    }
+
+    private void renderAssetContent() {
+        if (binding == null) {
+            return;
+        }
+
+        boolean showCrypto = selectedAssetTab == ASSET_TAB_CRYPTO;
+        boolean showWatchlist = selectedAssetTab == ASSET_TAB_WATCHLIST;
+        boolean showNfts = selectedAssetTab == ASSET_TAB_NFTS;
+        boolean hasNfts = currentNfts != null && !currentNfts.isEmpty();
+
+        binding.recyclerTokens.setVisibility(showCrypto ? View.VISIBLE : View.GONE);
+        binding.layoutWatchlistEmpty.setVisibility(showWatchlist ? View.VISIBLE : View.GONE);
+        binding.recyclerNfts.setVisibility(showNfts && hasNfts ? View.VISIBLE : View.GONE);
+        binding.layoutNftEmpty.setVisibility(showNfts && !hasNfts ? View.VISIBLE : View.GONE);
+    }
+
+    private void openHistoryTab() {
+        BottomNavigationView bottomNavigation = requireActivity().findViewById(R.id.bottomNavigation);
+        if (bottomNavigation != null) {
+            bottomNavigation.setSelectedItemId(R.id.menu_history);
+        }
     }
 
     private void setupChart() {
@@ -136,6 +216,11 @@ public class HomeFragment extends BaseFragment {
 
             tokenAdapter = new TokenAdapter(state.assets);
             binding.recyclerTokens.setAdapter(tokenAdapter);
+
+            nftAdapter = new NftAdapter(state.nfts);
+            binding.recyclerNfts.setAdapter(nftAdapter);
+            currentNfts = state.nfts == null ? new java.util.ArrayList<>() : state.nfts;
+            renderAssetContent();
 
             if (state.chartEntries == null || state.chartEntries.isEmpty()) {
                 binding.chartEthPrice.clear();

@@ -15,11 +15,13 @@ import java.util.Collections;
 import java.util.List;
 
 import id.rahmat.projekakhir.data.repository.PriceRepository;
+import id.rahmat.projekakhir.data.repository.NftRepository;
 import id.rahmat.projekakhir.data.repository.WalletRepository;
 import id.rahmat.projekakhir.di.ServiceLocator;
 import id.rahmat.projekakhir.R;
 import id.rahmat.projekakhir.utils.AppExecutors;
 import id.rahmat.projekakhir.utils.FormatUtils;
+import id.rahmat.projekakhir.wallet.NftAsset;
 import id.rahmat.projekakhir.wallet.TokenBalance;
 import id.rahmat.projekakhir.wallet.WalletSnapshot;
 
@@ -33,12 +35,14 @@ public class HomeViewModel extends AndroidViewModel {
         public final String balanceIdr;
         public final String balanceUsd;
         public final List<TokenItem> assets;
+        public final List<NftItem> nfts;
         public final List<CandleEntry> chartEntries;
         public final String errorMessage;
 
         public HomeUiState(String address, String shortAddress, String networkName,
                            String balanceEth, String balanceIdr, String balanceUsd,
-                           List<TokenItem> assets, List<CandleEntry> chartEntries, String errorMessage) {
+                           List<TokenItem> assets, List<NftItem> nfts,
+                           List<CandleEntry> chartEntries, String errorMessage) {
             this.address = address;
             this.shortAddress = shortAddress;
             this.networkName = networkName;
@@ -46,6 +50,7 @@ public class HomeViewModel extends AndroidViewModel {
             this.balanceIdr = balanceIdr;
             this.balanceUsd = balanceUsd;
             this.assets = assets;
+            this.nfts = nfts;
             this.chartEntries = chartEntries;
             this.errorMessage = errorMessage;
         }
@@ -53,12 +58,14 @@ public class HomeViewModel extends AndroidViewModel {
 
     private final WalletRepository walletRepository;
     private final PriceRepository priceRepository;
+    private final NftRepository nftRepository;
     private final MutableLiveData<HomeUiState> uiState = new MutableLiveData<>();
 
     public HomeViewModel(@NonNull Application application) {
         super(application);
         walletRepository = ServiceLocator.getWalletRepository(application);
         priceRepository = ServiceLocator.getPriceRepository(application);
+        nftRepository = ServiceLocator.getNftRepository(application);
     }
 
     public LiveData<HomeUiState> getUiState() {
@@ -72,6 +79,7 @@ public class HomeViewModel extends AndroidViewModel {
                 List<CandleEntry> chartEntries = priceRepository.getSevenDayCandleEntries();
                 List<TokenBalance> tokenBalances = walletRepository.loadTokenBalances();
                 List<TokenItem> tokenItems = buildAssetList(snapshot, tokenBalances);
+                List<NftItem> nftItems = buildNftList(safeLoadNfts(snapshot.getAddress()));
 
                 BigDecimal totalIdr = FormatUtils.safeMultiply(snapshot.getEthBalance(), snapshot.getEthPriceIdr());
                 BigDecimal totalUsd = FormatUtils.safeMultiply(snapshot.getEthBalance(), snapshot.getEthPriceUsd());
@@ -84,6 +92,7 @@ public class HomeViewModel extends AndroidViewModel {
                         FormatUtils.formatIdr(totalIdr),
                         FormatUtils.formatUsd(totalUsd),
                         tokenItems,
+                        nftItems,
                         chartEntries,
                         null
                 ));
@@ -93,6 +102,7 @@ public class HomeViewModel extends AndroidViewModel {
                         FormatUtils.formatEth(BigDecimal.ZERO),
                         FormatUtils.formatIdr(BigDecimal.ZERO),
                         FormatUtils.formatUsd(BigDecimal.ZERO),
+                        Collections.emptyList(),
                         Collections.emptyList(),
                         new ArrayList<>(),
                         exception.getMessage()
@@ -133,6 +143,37 @@ public class HomeViewModel extends AndroidViewModel {
                         resolveTokenIconRes(token.symbol)
                 ));
             }
+        }
+        return items;
+    }
+
+    private List<NftAsset> safeLoadNfts(String walletAddress) {
+        try {
+            return nftRepository.loadOwnedNfts(walletAddress);
+        } catch (Exception ignored) {
+            return Collections.emptyList();
+        }
+    }
+
+    private List<NftItem> buildNftList(List<NftAsset> nftAssets) {
+        if (nftAssets == null || nftAssets.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<NftItem> items = new ArrayList<>();
+        for (NftAsset nft : nftAssets) {
+            String symbol = nft.tokenSymbol == null || nft.tokenSymbol.isEmpty() ? "NFT" : nft.tokenSymbol;
+            if (symbol.length() > 4) {
+                symbol = symbol.substring(0, 4);
+            }
+            items.add(new NftItem(
+                    nft.collectionName,
+                    getApplication().getString(R.string.nft_token_id, nft.tokenId),
+                    nft.networkName,
+                    shortenAddress(nft.contractAddress),
+                    symbol,
+                    nft.imageUrl
+            ));
         }
         return items;
     }

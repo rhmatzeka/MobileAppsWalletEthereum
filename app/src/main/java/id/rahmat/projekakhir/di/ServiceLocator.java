@@ -7,6 +7,7 @@ import id.rahmat.projekakhir.data.local.AppDatabase;
 import id.rahmat.projekakhir.data.remote.CoinGeckoApi;
 import id.rahmat.projekakhir.data.remote.EtherscanApi;
 import id.rahmat.projekakhir.data.repository.PriceRepository;
+import id.rahmat.projekakhir.data.repository.NftRepository;
 import id.rahmat.projekakhir.data.repository.TransactionRepository;
 import id.rahmat.projekakhir.data.repository.WalletRepository;
 import id.rahmat.projekakhir.utils.AppPreferences;
@@ -22,6 +23,7 @@ public final class ServiceLocator {
     private static WalletRepository walletRepository;
     private static TransactionRepository transactionRepository;
     private static PriceRepository priceRepository;
+    private static NftRepository nftRepository;
 
     private ServiceLocator() {
     }
@@ -59,6 +61,19 @@ public final class ServiceLocator {
             );
         }
         return priceRepository;
+    }
+
+    public static NftRepository getNftRepository(Context context) {
+        if (nftRepository == null) {
+            Context appContext = context.getApplicationContext();
+            nftRepository = new NftRepository(
+                    createRetrofit(BuildConfig.ETHERSCAN_MAINNET_BASE_URL).create(EtherscanApi.class),
+                    createRetrofit(BuildConfig.ETHERSCAN_SEPOLIA_BASE_URL).create(EtherscanApi.class),
+                    new AppPreferences(appContext),
+                    new EthereumService()
+            );
+        }
+        return nftRepository;
     }
 
     private static Retrofit createRetrofit(String baseUrl) {
