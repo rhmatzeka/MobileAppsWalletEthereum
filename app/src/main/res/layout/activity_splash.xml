@@ -71,40 +71,21 @@
                 android:layout_gravity="center"
                 android:background="@drawable/bg_splash_ring" />
 
-            <com.airbnb.lottie.LottieAnimationView
-                android:id="@+id/lottieSplash"
-                android:layout_width="150dp"
-                android:layout_height="150dp"
-                android:layout_gravity="center"
-                android:alpha="0.58"
-                app:lottie_autoPlay="true"
-                app:lottie_loop="true"
-                app:lottie_rawRes="@raw/mats_wallet_loader" />
-
-            <LinearLayout
+            <FrameLayout
                 android:id="@+id/logoCore"
                 android:layout_width="108dp"
                 android:layout_height="108dp"
                 android:layout_gravity="center"
                 android:background="@drawable/bg_splash_logo_core"
-                android:gravity="center"
-                android:orientation="vertical">
+                android:padding="10dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/splash_logo_mark"
-                    android:textColor="@color/mw_text_primary"
-                    android:textSize="28sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/splash_logo_caption"
-                    android:textColor="@color/mw_text_secondary"
-                    android:textSize="10sp" />
-            </LinearLayout>
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/splash_logo_content_description"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ethernest1" />
+            </FrameLayout>
         </FrameLayout>
 
         <TextView

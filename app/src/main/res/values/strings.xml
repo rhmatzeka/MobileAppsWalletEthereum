@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Mats Wallet</string>
+    <string name="app_name">Ethernest</string>
     <string name="wallet_tagline">Ethereum e-wallet modern untuk transaksi harian yang aman.</string>
     <string name="wallet_not_ready">Wallet belum tersedia. Buat atau import wallet dulu.</string>
     <string name="wallet_ready">Wallet berhasil disiapkan.</string>
@@ -29,10 +29,10 @@
     <string name="next">Lanjut</string>
     <string name="back_action">Kembali</string>
     <string name="continue_action">Lanjutkan</string>
-    <string name="splash_title">Mats Wallet</string>
+    <string name="splash_title">Ethernest</string>
     <string name="splash_subtitle">Wallet Ethereum yang aman, tenang, dan siap transaksi.</string>
     <string name="splash_badge">SECURE ETHEREUM WALLET</string>
-    <string name="splash_logo_mark">MW</string>
+    <string name="splash_logo_content_description">Logo Ethernest</string>
     <string name="splash_logo_caption">ON-CHAIN</string>
     <string name="splash_loading_status">Mengecek keamanan wallet dan sinkronisasi harga...</string>
     <string name="create_wallet">Buat Wallet Baru</string>
@@ -49,7 +49,7 @@
     <string name="activate_biometric">Aktifkan biometrik</string>
     <string name="activate_biometric_subtitle">Fingerprint / Face ID akan dipakai sebagai login cepat setelah PIN berhasil dibuat.</string>
     <string name="biometric_title">Masuk lebih cepat dengan biometrik</string>
-    <string name="biometric_subtitle">Gunakan fingerprint atau Face ID untuk membuka Mats Wallet secara instan.</string>
+    <string name="biometric_subtitle">Gunakan fingerprint atau Face ID untuk membuka Ethernest secara instan.</string>
     <string name="use_biometric">Gunakan Biometrik</string>
     <string name="use_pin_instead">Masuk dengan PIN</string>
     <string name="home_label">Home</string>
@@ -113,7 +113,7 @@
     <string name="gas_fee_title">Estimasi gas fee</string>
     <string name="gas_fee_value">0.00042 ETH | Rp 21.900</string>
     <string name="send_confirm_action">Konfirmasi Transaksi</string>
-    <string name="send_disclaimer">Mats Wallet akan selalu menampilkan estimasi gas fee sebelum transaksi dikirim melalui Infura RPC.</string>
+    <string name="send_disclaimer">Ethernest akan selalu menampilkan estimasi gas fee sebelum transaksi dikirim melalui Infura RPC.</string>
     <string name="receive_screen_title">Terima ETH</string>
     <string name="receive_screen_subtitle">Buat request pembayaran ETH dengan QR yang sudah berisi alamat dan nominal opsional.</string>
     <string name="receive_qr_hint">QR memakai format Ethereum URI. Isi amount kalau ingin penerima scan dengan nominal otomatis.</string>
@@ -151,15 +151,15 @@
     <string name="change_pin">Ganti PIN</string>
     <string name="network_section_title">Jaringan Blockchain</string>
     <string name="about_section_title">Tentang Aplikasi</string>
-    <string name="about_app_body">Mats Wallet dibangun dengan Java, Material 3, MVVM, Web3j, Retrofit, Room, dan Android Keystore.</string>
+    <string name="about_app_body">Ethernest dibangun dengan Java, Material 3, MVVM, Web3j, Retrofit, Room, dan Android Keystore.</string>
     <string name="developer_name">Dibuat oleh Rahmat Eka Satria</string>
     <string name="developer_github">github.com/rhmatzeka</string>
     <string name="logout_hint">Keluar akan menghapus wallet lokal, PIN, dan histori transaksi yang tersimpan di perangkat ini.</string>
-    <string name="logout_title">Logout dari Mats Wallet?</string>
+    <string name="logout_title">Logout dari Ethernest?</string>
     <string name="logout_message">Wallet terenkripsi, PIN, dan histori lokal akan dihapus dari perangkat ini. Pastikan seed phrase kamu sudah dibackup.</string>
     <string name="logout_action">Logout</string>
     <string name="swap_screen_title">Swap Token</string>
-    <string name="swap_screen_subtitle">Pilih aset lalu tukar dengan ETH lewat pool testnet Mats Wallet.</string>
+    <string name="swap_screen_subtitle">Pilih aset lalu tukar dengan ETH lewat pool testnet Ethernest.</string>
     <string name="swap_asset_label">Aset</string>
     <string name="swap_direction_label">Arah Swap</string>
     <string name="swap_direction_token_to_eth">Token ke ETH</string>

@@ -45,9 +45,6 @@ public class SplashActivity extends BaseActivity {
                 .setInterpolator(new DecelerateInterpolator())
                 .start();
 
-        binding.lottieSplash.setSpeed(1.15f);
-        binding.lottieSplash.playAnimation();
-
         runningAnimators.add(startInfiniteRotation(binding.viewOuterRing, 0f, 360f, 9000L));
         runningAnimators.add(startInfiniteRotation(binding.viewInnerRing, 360f, 0f, 7000L));
         runningAnimators.add(startInfiniteAlpha(binding.logoCore, 0.88f, 1f, 1600L, 0L));
@@ -97,9 +94,6 @@ public class SplashActivity extends BaseActivity {
         handler.removeCallbacksAndMessages(null);
         for (Animator animator : runningAnimators) {
             animator.cancel();
-        }
-        if (binding != null) {
-            binding.lottieSplash.cancelAnimation();
         }
         binding = null;
         super.onDestroy();
