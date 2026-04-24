@@ -9,6 +9,7 @@ Ethernest adalah aplikasi Android e-wallet multi-chain berbasis Java dengan tamp
 - Home asset list multi-chain dengan icon coin real untuk ETH, BNB, AVAX, dan Polygon.
 - Kirim dan terima ETH dengan QR, set amount, share address, dan deposit from exchange.
 - Swap testnet untuk MATS dan IDRX melalui smart contract pool sederhana.
+- UI swap sekarang memakai kartu `From/To`, picker token custom, dan daftar aset yang lebih luas untuk preview route swap.
 - Buy ETH dengan halaman pembayaran in-app WebView, backend Midtrans, dan harga ETH/IDR realtime.
 
 ## Tech Stack
@@ -42,6 +43,7 @@ Catatan:
 - HP fisik memakai IP laptop/VPS, contoh `http://192.168.1.10:8787/`.
 - Saat development via USB, kamu bisa menjalankan `adb reverse tcp:8787 tcp:8787`.
 - Flow Buy di emulator sekarang memprioritaskan `10.0.2.2` lebih dulu supaya dev checkout lokal tidak nyasar ke IP lama.
+- Dialog pilih network, custom RPC, dan picker token swap sudah memakai custom modal style agar konsisten dengan UI wallet.
 
 ## Buy Server + Midtrans
 Flow beli tidak menyimpan private key di Android. Aplikasi membuat order ke backend, backend membuat transaksi Midtrans, pembayaran ditampilkan di dalam aplikasi via WebView, lalu backend mengirim ETH ke wallet setelah status pembayaran berhasil.
@@ -87,6 +89,10 @@ https://domain-kamu.com/api/midtrans/notification
 
 ## Smart Contract
 Folder `smart-contracts` berisi ERC-20 token dan pool swap testnet.
+
+Catatan swap:
+- Route swap on-chain yang benar-benar aktif saat ini masih mengikuti pool yang kamu deploy, default-nya `MATS` dan `IDRX`.
+- Token lain sudah bisa muncul di picker swap untuk roadmap multi-asset, tapi akan ditandai `Segera hadir` sampai pool/router-nya tersedia.
 
 Langkah cepat:
 ```
