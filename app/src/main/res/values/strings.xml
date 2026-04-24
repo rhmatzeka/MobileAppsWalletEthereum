@@ -237,6 +237,7 @@
     <string name="swap_asset_label">Aset</string>
     <string name="swap_asset_picker_title">Pilih token swap</string>
     <string name="swap_asset_picker_subtitle">Pilih token yang mau dipakai di sisi from atau to. Token tanpa pool aktif akan ditandai segera hadir.</string>
+    <string name="swap_asset_picker_unavailable">Route swap untuk %1$s belum aktif, jadi token ini belum bisa dipilih.</string>
     <string name="swap_asset_name_eth">Ethereum</string>
     <string name="swap_asset_name_bnb">BNB Smart Chain</string>
     <string name="swap_asset_name_avax">Avalanche</string>

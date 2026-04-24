@@ -241,8 +241,15 @@ public class SwapFragment extends BaseFragment {
                 rowRoot.setBackgroundResource(R.drawable.bg_swap_asset_option_selected);
                 imageSelected.setVisibility(View.VISIBLE);
             }
+            if (!isReady) {
+                rowRoot.setAlpha(0.78f);
+            }
 
             rowRoot.setOnClickListener(v -> {
+                if (!isReady) {
+                    showMessage(getString(R.string.swap_asset_picker_unavailable, viewModel.getAssetSymbol(asset)));
+                    return;
+                }
                 viewModel.setSelectedAsset(asset);
                 syncSwapUi();
                 refreshQuote();
