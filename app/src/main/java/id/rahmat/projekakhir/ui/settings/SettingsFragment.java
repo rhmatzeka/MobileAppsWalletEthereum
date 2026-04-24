@@ -11,8 +11,11 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+
+import java.util.List;
 import java.util.concurrent.Executor;
 
 import id.rahmat.projekakhir.R;
@@ -24,11 +27,14 @@ import id.rahmat.projekakhir.ui.base.BaseFragment;
 import id.rahmat.projekakhir.ui.onboarding.OnboardingActivity;
 import id.rahmat.projekakhir.utils.AppExecutors;
 import id.rahmat.projekakhir.utils.AppPreferences;
+import id.rahmat.projekakhir.wallet.EthereumNetwork;
+import id.rahmat.projekakhir.wallet.EthereumNetworkRegistry;
 
 public class SettingsFragment extends BaseFragment {
 
     private FragmentSettingsBinding binding;
     private WalletRepository walletRepository;
+    private AppPreferences appPreferences;
 
     @Nullable
     @Override
@@ -41,37 +47,19 @@ public class SettingsFragment extends BaseFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        AppPreferences preferences = new AppPreferences(requireContext());
+        appPreferences = new AppPreferences(requireContext());
         walletRepository = ServiceLocator.getWalletRepository(requireContext());
 
-        binding.switchBiometric.setChecked(preferences.isBiometricEnabled());
+        binding.switchBiometric.setChecked(appPreferences.isBiometricEnabled());
         binding.switchBiometric.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            preferences.setBiometricEnabled(isChecked);
+            appPreferences.setBiometricEnabled(isChecked);
             showMessage(isChecked ? getString(R.string.activate_biometric) : getString(R.string.use_pin_instead));
         });
 
-        binding.toggleGroupNetwork.check(
-                AppPreferences.NETWORK_MAINNET.equals(preferences.getSelectedNetwork())
-                        ? binding.buttonMainnet.getId()
-                        : binding.buttonSepolia.getId()
-        );
-        updateNetworkButtonStyles();
-
-        binding.toggleGroupNetwork.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) {
-                return;
-            }
-            if (checkedId == binding.buttonMainnet.getId()) {
-                preferences.setSelectedNetwork(AppPreferences.NETWORK_MAINNET);
-                showMessage(getString(R.string.network_mainnet));
-            } else {
-                preferences.setSelectedNetwork(AppPreferences.NETWORK_SEPOLIA);
-                showMessage(getString(R.string.network_sepolia));
-            }
-            updateNetworkButtonStyles();
-        });
-
-        binding.buttonBackupMnemonic.setOnClickListener(v -> revealMnemonic(preferences.isBiometricEnabled()));
+        renderSelectedNetwork();
+        binding.buttonChooseNetwork.setOnClickListener(v -> showNetworkPicker());
+        binding.buttonAddCustomNetwork.setOnClickListener(v -> showAddCustomNetworkDialog());
+        binding.buttonBackupMnemonic.setOnClickListener(v -> revealMnemonic(appPreferences.isBiometricEnabled()));
         binding.buttonChangePin.setOnClickListener(v -> showMessage(getString(R.string.change_pin)));
         binding.buttonLogout.setOnClickListener(v -> confirmLogout());
         binding.textDeveloperGithub.setOnClickListener(v -> openGithubProfile());
@@ -156,25 +144,127 @@ public class SettingsFragment extends BaseFragment {
         });
     }
 
-    private void updateNetworkButtonStyles() {
-        boolean isMainnet = binding.toggleGroupNetwork.getCheckedButtonId() == binding.buttonMainnet.getId();
-        applyNetworkButtonStyle(binding.buttonMainnet, isMainnet);
-        applyNetworkButtonStyle(binding.buttonSepolia, !isMainnet);
+    private void showNetworkPicker() {
+        List<EthereumNetwork> networks = EthereumNetworkRegistry.getAll(appPreferences);
+        String[] labels = new String[networks.size()];
+        int checkedItem = 0;
+        String selectedKey = appPreferences.getSelectedNetwork();
+
+        for (int index = 0; index < networks.size(); index++) {
+            EthereumNetwork network = networks.get(index);
+            String rpcState = network.hasRpcUrl()
+                    ? getString(R.string.network_rpc_ready)
+                    : getString(R.string.network_rpc_missing);
+            labels[index] = getString(
+                    network.isCustom() ? R.string.network_picker_item_custom : R.string.network_picker_item,
+                    network.getDisplayName(),
+                    String.valueOf(network.getChainId()),
+                    rpcState
+            );
+            if (network.getKey().equalsIgnoreCase(selectedKey)) {
+                checkedItem = index;
+            }
+        }
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.network_picker_title)
+                .setSingleChoiceItems(labels, checkedItem, (dialog, which) -> {
+                    EthereumNetwork network = networks.get(which);
+                    if (!network.hasRpcUrl()) {
+                        showMessage(getString(R.string.network_missing_rpc_select, network.getDisplayName()));
+                        return;
+                    }
+                    appPreferences.setSelectedNetwork(network.getKey());
+                    renderSelectedNetwork();
+                    showMessage(getString(R.string.network_selected_message, network.getDisplayName()));
+                    dialog.dismiss();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
-    private void applyNetworkButtonStyle(com.google.android.material.button.MaterialButton button, boolean selected) {
-        int backgroundColor = selected ? R.color.mw_highlight : R.color.mw_surface_elevated;
-        int textColor = selected ? R.color.white : R.color.mw_text_primary;
-        int strokeColor = selected ? R.color.mw_highlight : R.color.mw_divider;
-        button.setBackgroundTintList(androidx.core.content.ContextCompat.getColorStateList(requireContext(), backgroundColor));
-        button.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), textColor));
-        button.setStrokeColor(androidx.core.content.ContextCompat.getColorStateList(requireContext(), strokeColor));
+    private void showAddCustomNetworkDialog() {
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_custom_network, null, false);
+        TextInputEditText inputName = view.findViewById(R.id.inputNetworkName);
+        TextInputEditText inputSymbol = view.findViewById(R.id.inputNetworkSymbol);
+        TextInputEditText inputChainId = view.findViewById(R.id.inputNetworkChainId);
+        TextInputEditText inputRpcUrl = view.findViewById(R.id.inputNetworkRpcUrl);
+        TextInputEditText inputCoinGeckoId = view.findViewById(R.id.inputNetworkCoinGeckoId);
+        TextInputEditText inputExplorerUrl = view.findViewById(R.id.inputNetworkExplorerUrl);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.network_form_title)
+                .setView(view)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.network_form_save, null)
+                .create();
+        dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String displayName = textOf(inputName);
+            String symbol = textOf(inputSymbol);
+            String chainIdRaw = textOf(inputChainId);
+            String rpcUrl = textOf(inputRpcUrl);
+            String coinGeckoId = textOf(inputCoinGeckoId);
+            String explorerUrl = normalizeExplorerBaseUrl(textOf(inputExplorerUrl));
+            long chainId = parseLong(chainIdRaw);
+            if (displayName.isEmpty() || symbol.isEmpty() || chainId <= 0 || rpcUrl.isEmpty()) {
+                showMessage(getString(R.string.network_form_invalid));
+                return;
+            }
+
+            EthereumNetwork customNetwork = EthereumNetwork.custom(
+                    displayName,
+                    displayName,
+                    symbol,
+                    coinGeckoId,
+                    chainId,
+                    rpcUrl,
+                    explorerUrl
+            );
+            EthereumNetworkRegistry.saveCustomNetwork(appPreferences, customNetwork);
+            appPreferences.setSelectedNetwork(customNetwork.getKey());
+            renderSelectedNetwork();
+            showMessage(getString(R.string.network_form_saved, customNetwork.getDisplayName()));
+            dialog.dismiss();
+        });
+    }
+
+    private void renderSelectedNetwork() {
+        EthereumNetwork network = EthereumNetworkRegistry.resolve(appPreferences.getSelectedNetwork(), appPreferences);
+        binding.textSelectedNetworkName.setText(network.getDisplayName());
+        String rpcState = network.hasRpcUrl()
+                ? getString(R.string.network_rpc_ready)
+                : getString(R.string.network_rpc_missing);
+        String suffix = network.isCustom() ? " • " + getString(R.string.network_custom_suffix) : "";
+        binding.textSelectedNetworkMeta.setText(
+                "Chain " + network.getChainId() + " • " + network.getNativeSymbol() + " • " + rpcState + suffix
+        );
     }
 
     private void openGithubProfile() {
         String githubUrl = "https://github.com/rhmatzeka";
         Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(githubUrl));
         startActivity(intent);
+    }
+
+    private String textOf(TextInputEditText editText) {
+        return editText.getText() == null ? "" : editText.getText().toString().trim();
+    }
+
+    private long parseLong(String value) {
+        try {
+            return Long.parseLong(value);
+        } catch (Exception ignored) {
+            return -1L;
+        }
+    }
+
+    private String normalizeExplorerBaseUrl(String value) {
+        String trimmed = value == null ? "" : value.trim();
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        return trimmed.endsWith("/") ? trimmed : trimmed + "/";
     }
 
     @Override

@@ -17,11 +17,15 @@ import id.rahmat.projekakhir.data.repository.TransactionRepository;
 import id.rahmat.projekakhir.data.repository.WalletRepository;
 import id.rahmat.projekakhir.di.ServiceLocator;
 import id.rahmat.projekakhir.utils.AppExecutors;
+import id.rahmat.projekakhir.utils.AppPreferences;
+import id.rahmat.projekakhir.wallet.EthereumNetwork;
+import id.rahmat.projekakhir.wallet.EthereumNetworkRegistry;
 
 public class HistoryViewModel extends AndroidViewModel {
 
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
+    private final AppPreferences appPreferences;
     private final MutableLiveData<String> filter = new MutableLiveData<>("all");
     private final LiveData<List<TransactionItem>> transactions;
 
@@ -29,6 +33,7 @@ public class HistoryViewModel extends AndroidViewModel {
         super(application);
         walletRepository = ServiceLocator.getWalletRepository(application);
         transactionRepository = ServiceLocator.getTransactionRepository(application);
+        appPreferences = new AppPreferences(application);
 
         transactions = Transformations.switchMap(filter, value -> {
             String address = walletRepository.getWalletAddress();
@@ -68,11 +73,16 @@ public class HistoryViewModel extends AndroidViewModel {
         for (TransactionEntity entity : entities) {
             boolean outgoing = TransactionRepository.DIRECTION_SENT.equals(entity.direction);
             String prefix = outgoing ? "-" : "+";
+            EthereumNetwork network = EthereumNetworkRegistry.resolve(entity.network, appPreferences);
+            String nativeSymbol = network.getNativeSymbol();
             items.add(new TransactionItem(
+                    entity.hash,
                     outgoing ? "Kirim ke " + shorten(entity.toAddress) : "Terima dari " + shorten(entity.fromAddress),
                     new Date(entity.timestamp).toString(),
-                    prefix + entity.amountEth + " ETH",
+                    prefix + entity.amountEth + " " + nativeSymbol,
+                    entity.gasFeeEth + " " + nativeSymbol,
                     entity.status,
+                    network.getKey(),
                     outgoing
             ));
         }

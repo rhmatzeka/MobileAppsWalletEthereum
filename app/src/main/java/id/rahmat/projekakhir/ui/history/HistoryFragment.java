@@ -36,8 +36,12 @@ public class HistoryFragment extends BaseFragment {
         adapter = new TransactionAdapter(item -> {
             Intent intent = new Intent(requireContext(), TransactionDetailActivity.class);
             intent.putExtra("title", item.getTitle());
+            intent.putExtra("hash", item.getHash());
+            intent.putExtra("time", item.getTime());
             intent.putExtra("amount", item.getAmount());
+            intent.putExtra("gasFee", item.getGasFee());
             intent.putExtra("status", item.getStatus());
+            intent.putExtra("networkKey", item.getNetworkKey());
             startActivity(intent);
         });
         binding.recyclerTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));

@@ -7,9 +7,12 @@ import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import id.rahmat.projekakhir.data.remote.CoinGeckoApi;
+import id.rahmat.projekakhir.wallet.EthereumNetwork;
 import retrofit2.Response;
 
 public class PriceRepository {
@@ -25,30 +28,39 @@ public class PriceRepository {
     }
 
     private final CoinGeckoApi coinGeckoApi;
-    private PriceSnapshot lastSnapshot = new PriceSnapshot(BigDecimal.ZERO, BigDecimal.ZERO);
+    private final Map<String, PriceSnapshot> lastSnapshots = new HashMap<>();
 
     public PriceRepository(CoinGeckoApi coinGeckoApi) {
         this.coinGeckoApi = coinGeckoApi;
     }
 
-    public PriceSnapshot getLatestEthPrice() throws IOException {
-        Response<JsonObject> response = coinGeckoApi.getSimplePrice("ethereum", "usd,idr").execute();
+    public PriceSnapshot getLatestPrice(EthereumNetwork network) throws IOException {
+        String assetId = network.getCoinGeckoAssetId();
+        if (assetId == null || assetId.trim().isEmpty()) {
+            return new PriceSnapshot(BigDecimal.ZERO, BigDecimal.ZERO);
+        }
+        PriceSnapshot lastSnapshot = getLastSnapshot(assetId);
+        Response<JsonObject> response = coinGeckoApi.getSimplePrice(assetId, "usd,idr").execute();
         if (response == null || !response.isSuccessful() || response.body() == null) {
             return lastSnapshot;
         }
-        JsonObject ethereum = response.body().getAsJsonObject("ethereum");
-        if (ethereum == null || ethereum.get("usd") == null || ethereum.get("idr") == null) {
+        JsonObject asset = response.body().getAsJsonObject(assetId);
+        if (asset == null || asset.get("usd") == null || asset.get("idr") == null) {
             return lastSnapshot;
         }
-        lastSnapshot = new PriceSnapshot(
-                ethereum.get("usd").getAsBigDecimal(),
-                ethereum.get("idr").getAsBigDecimal()
+        PriceSnapshot snapshot = new PriceSnapshot(
+                asset.get("usd").getAsBigDecimal(),
+                asset.get("idr").getAsBigDecimal()
         );
-        return lastSnapshot;
+        lastSnapshots.put(assetId, snapshot);
+        return snapshot;
     }
 
-    public List<CandleEntry> getSevenDayCandleEntries() throws IOException {
-        Response<JsonArray> response = coinGeckoApi.getOhlc("usd", 7).execute();
+    public List<CandleEntry> getSevenDayCandleEntries(EthereumNetwork network) throws IOException {
+        if (network.getCoinGeckoAssetId() == null || network.getCoinGeckoAssetId().trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        Response<JsonArray> response = coinGeckoApi.getOhlc(network.getCoinGeckoAssetId(), "usd", 7).execute();
         JsonArray candles = response.body();
         List<CandleEntry> entries = new ArrayList<>();
         if (candles == null) {
@@ -67,5 +79,13 @@ public class PriceRepository {
             entries.add(new CandleEntry(index, high, low, open, close));
         }
         return entries;
+    }
+
+    private PriceSnapshot getLastSnapshot(String assetId) {
+        PriceSnapshot snapshot = lastSnapshots.get(assetId);
+        if (snapshot != null) {
+            return snapshot;
+        }
+        return new PriceSnapshot(BigDecimal.ZERO, BigDecimal.ZERO);
     }
 }

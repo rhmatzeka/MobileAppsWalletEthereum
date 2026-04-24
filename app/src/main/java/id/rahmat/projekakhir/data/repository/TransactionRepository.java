@@ -17,6 +17,7 @@ import id.rahmat.projekakhir.data.remote.model.EtherscanTransactionItem;
 import id.rahmat.projekakhir.data.remote.model.EtherscanTransactionsResponse;
 import id.rahmat.projekakhir.utils.AppPreferences;
 import id.rahmat.projekakhir.wallet.EthereumNetwork;
+import id.rahmat.projekakhir.wallet.EthereumNetworkRegistry;
 import retrofit2.Response;
 
 public class TransactionRepository {
@@ -54,8 +55,11 @@ public class TransactionRepository {
             return;
         }
 
-        EthereumNetwork network = EthereumNetwork.fromKey(appPreferences.getSelectedNetwork());
-        EtherscanApi api = network == EthereumNetwork.MAINNET ? mainnetApi : sepoliaApi;
+        EthereumNetwork network = EthereumNetworkRegistry.resolve(appPreferences.getSelectedNetwork(), appPreferences);
+        if (!network.supportsExplorerSync()) {
+            return;
+        }
+        EtherscanApi api = EthereumNetwork.MAINNET.isSameNetwork(network) ? mainnetApi : sepoliaApi;
         Response<EtherscanTransactionsResponse> response = api
                 .getTransactions("account", "txlist", walletAddress, "desc", BuildConfig.ETHERSCAN_API_KEY)
                 .execute();

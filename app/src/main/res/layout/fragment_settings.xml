@@ -114,29 +114,49 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/toggleGroupNetwork"
+            <TextView
+                android:id="@+id/textSelectedNetworkLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="@string/network_current_label"
+                android:textColor="@color/mw_text_secondary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/textSelectedNetworkName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/network_sepolia"
+                android:textColor="@color/mw_text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textSelectedNetworkMeta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/network_current_meta_placeholder"
+                android:textColor="@color/mw_text_secondary"
+                android:textSize="13sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonChooseNetwork"
+                style="@style/Widget.MatsWallet.Button.Primary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:singleSelection="true">
+                android:text="@string/network_choose_action" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/buttonSepolia"
-                    style="@style/Widget.MatsWallet.Button.Primary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/network_sepolia" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/buttonMainnet"
-                    style="@style/Widget.MatsWallet.Button.Secondary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/network_mainnet" />
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonAddCustomNetwork"
+                style="@style/Widget.MatsWallet.Button.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/network_add_custom_action" />
         </LinearLayout>
 
         <LinearLayout

@@ -26,7 +26,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Arrays;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +34,7 @@ import id.rahmat.projekakhir.BuildConfig;
 
 public class EthereumService {
 
-    private final Map<EthereumNetwork, Web3j> clients = new EnumMap<>(EthereumNetwork.class);
+    private final Map<String, Web3j> clients = new HashMap<>();
     private static final BigInteger DEFAULT_CONTRACT_GAS_LIMIT = BigInteger.valueOf(350_000L);
 
     public BigDecimal getBalance(String address, EthereumNetwork network) throws IOException {
@@ -269,12 +269,12 @@ public class EthereumService {
     }
 
     private Web3j getClient(EthereumNetwork network) {
-        Web3j existing = clients.get(network);
+        Web3j existing = clients.get(network.getKey());
         if (existing != null) {
             return existing;
         }
         Web3j client = Web3j.build(new HttpService(network.getRpcUrl()));
-        clients.put(network, client);
+        clients.put(network.getKey(), client);
         return client;
     }
 }

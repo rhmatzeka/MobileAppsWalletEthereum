@@ -6,17 +6,22 @@ public class WalletSnapshot {
 
     private final String address;
     private final String networkName;
-    private final BigDecimal ethBalance;
-    private final BigDecimal ethPriceUsd;
-    private final BigDecimal ethPriceIdr;
+    private final String nativeAssetName;
+    private final String nativeAssetSymbol;
+    private final BigDecimal nativeBalance;
+    private final BigDecimal nativePriceUsd;
+    private final BigDecimal nativePriceIdr;
 
-    public WalletSnapshot(String address, String networkName, BigDecimal ethBalance,
-                          BigDecimal ethPriceUsd, BigDecimal ethPriceIdr) {
+    public WalletSnapshot(String address, String networkName, String nativeAssetName,
+                          String nativeAssetSymbol, BigDecimal nativeBalance,
+                          BigDecimal nativePriceUsd, BigDecimal nativePriceIdr) {
         this.address = address;
         this.networkName = networkName;
-        this.ethBalance = ethBalance;
-        this.ethPriceUsd = ethPriceUsd;
-        this.ethPriceIdr = ethPriceIdr;
+        this.nativeAssetName = nativeAssetName;
+        this.nativeAssetSymbol = nativeAssetSymbol;
+        this.nativeBalance = nativeBalance;
+        this.nativePriceUsd = nativePriceUsd;
+        this.nativePriceIdr = nativePriceIdr;
     }
 
     public String getAddress() {
@@ -27,15 +32,35 @@ public class WalletSnapshot {
         return networkName;
     }
 
+    public String getNativeAssetName() {
+        return nativeAssetName;
+    }
+
+    public String getNativeAssetSymbol() {
+        return nativeAssetSymbol;
+    }
+
+    public BigDecimal getNativeBalance() {
+        return nativeBalance;
+    }
+
+    public BigDecimal getNativePriceUsd() {
+        return nativePriceUsd;
+    }
+
+    public BigDecimal getNativePriceIdr() {
+        return nativePriceIdr;
+    }
+
     public BigDecimal getEthBalance() {
-        return ethBalance;
+        return nativeBalance;
     }
 
     public BigDecimal getEthPriceUsd() {
-        return ethPriceUsd;
+        return nativePriceUsd;
     }
 
     public BigDecimal getEthPriceIdr() {
-        return ethPriceIdr;
+        return nativePriceIdr;
     }
 }

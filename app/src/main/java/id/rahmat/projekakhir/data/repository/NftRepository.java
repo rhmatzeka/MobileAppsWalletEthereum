@@ -18,6 +18,7 @@ import id.rahmat.projekakhir.data.remote.model.EtherscanNftTransferItem;
 import id.rahmat.projekakhir.data.remote.model.EtherscanNftTransfersResponse;
 import id.rahmat.projekakhir.utils.AppPreferences;
 import id.rahmat.projekakhir.wallet.EthereumNetwork;
+import id.rahmat.projekakhir.wallet.EthereumNetworkRegistry;
 import id.rahmat.projekakhir.wallet.EthereumService;
 import id.rahmat.projekakhir.wallet.NftAsset;
 import okhttp3.OkHttpClient;
@@ -52,8 +53,11 @@ public class NftRepository {
             return Collections.emptyList();
         }
 
-        EthereumNetwork network = EthereumNetwork.fromKey(appPreferences.getSelectedNetwork());
-        EtherscanApi api = network == EthereumNetwork.MAINNET ? mainnetApi : sepoliaApi;
+        EthereumNetwork network = EthereumNetworkRegistry.resolve(appPreferences.getSelectedNetwork(), appPreferences);
+        if (!network.supportsExplorerSync()) {
+            return Collections.emptyList();
+        }
+        EtherscanApi api = EthereumNetwork.MAINNET.isSameNetwork(network) ? mainnetApi : sepoliaApi;
         JsonArray erc721Transfers = fetchNftTransfers(api, walletAddress, "tokennfttx");
         JsonArray erc1155Transfers = fetchNftTransfers(api, walletAddress, "token1155tx");
 

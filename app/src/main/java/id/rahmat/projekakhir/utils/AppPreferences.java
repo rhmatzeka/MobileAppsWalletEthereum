@@ -3,15 +3,20 @@ package id.rahmat.projekakhir.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import id.rahmat.projekakhir.BuildConfig;
+
 public class AppPreferences {
 
     public static final String NETWORK_SEPOLIA = "sepolia";
     public static final String NETWORK_MAINNET = "mainnet";
+    public static final String NETWORK_BSC = "bsc";
+    public static final String NETWORK_AVALANCHE = "avalanche";
 
     private static final String PREFS_NAME = "mats_wallet_prefs";
     private static final String KEY_ONBOARDING_DONE = "key_onboarding_done";
     private static final String KEY_BIOMETRIC_ENABLED = "key_biometric_enabled";
     private static final String KEY_SELECTED_NETWORK = "key_selected_network";
+    private static final String KEY_CUSTOM_NETWORKS_JSON = "key_custom_networks_json";
 
     private final SharedPreferences sharedPreferences;
 
@@ -36,11 +41,19 @@ public class AppPreferences {
     }
 
     public String getSelectedNetwork() {
-        return sharedPreferences.getString(KEY_SELECTED_NETWORK, NETWORK_SEPOLIA);
+        return sharedPreferences.getString(KEY_SELECTED_NETWORK, BuildConfig.DEFAULT_ETH_NETWORK);
     }
 
     public void setSelectedNetwork(String network) {
         sharedPreferences.edit().putString(KEY_SELECTED_NETWORK, network).apply();
+    }
+
+    public String getCustomNetworksJson() {
+        return sharedPreferences.getString(KEY_CUSTOM_NETWORKS_JSON, "[]");
+    }
+
+    public void setCustomNetworksJson(String json) {
+        sharedPreferences.edit().putString(KEY_CUSTOM_NETWORKS_JSON, json).apply();
     }
 
     public void clearSession() {

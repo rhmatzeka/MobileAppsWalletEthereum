@@ -10,6 +10,7 @@ import id.rahmat.projekakhir.utils.FormatUtils;
 import id.rahmat.projekakhir.utils.AppPreferences;
 import id.rahmat.projekakhir.wallet.TokenBalance;
 import id.rahmat.projekakhir.wallet.EthereumNetwork;
+import id.rahmat.projekakhir.wallet.EthereumNetworkRegistry;
 import id.rahmat.projekakhir.wallet.EthereumService;
 import id.rahmat.projekakhir.wallet.WalletManager;
 import id.rahmat.projekakhir.wallet.WalletSnapshot;
@@ -46,7 +47,7 @@ public class WalletRepository {
     }
 
     public EthereumNetwork getSelectedNetwork() {
-        return EthereumNetwork.fromKey(appPreferences.getSelectedNetwork());
+        return EthereumNetworkRegistry.resolve(appPreferences.getSelectedNetwork(), appPreferences);
     }
 
     public void clearSession() {
@@ -56,15 +57,26 @@ public class WalletRepository {
 
     public WalletSnapshot loadWalletSnapshot() throws Exception {
         if (!walletManager.hasWallet()) {
-            return new WalletSnapshot("", getSelectedNetwork().getDisplayName(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+            EthereumNetwork network = getSelectedNetwork();
+            return new WalletSnapshot(
+                    "",
+                    network.getDisplayName(),
+                    network.getNativeAssetName(),
+                    network.getNativeSymbol(),
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO
+            );
         }
 
         EthereumNetwork network = getSelectedNetwork();
         BigDecimal balance = ethereumService.getBalance(walletManager.getWalletAddress(), network);
-        PriceRepository.PriceSnapshot priceSnapshot = priceRepository.getLatestEthPrice();
+        PriceRepository.PriceSnapshot priceSnapshot = priceRepository.getLatestPrice(network);
         return new WalletSnapshot(
                 walletManager.getWalletAddress(),
                 network.getDisplayName(),
+                network.getNativeAssetName(),
+                network.getNativeSymbol(),
                 balance,
                 priceSnapshot.usd,
                 priceSnapshot.idr
@@ -81,13 +93,53 @@ public class WalletRepository {
             return Collections.emptyList();
         }
 
-        EthereumNetwork network = getSelectedNetwork();
-        if (network != EthereumNetwork.SEPOLIA) {
-            return Collections.emptyList();
+        List<TokenBalance> tokens = loadNativeAssetBalances(walletAddress);
+        tokens.addAll(loadTrackedTokenBalances(walletAddress, getSelectedNetwork()));
+        return tokens;
+    }
+
+    private List<TokenBalance> loadNativeAssetBalances(String walletAddress) {
+        List<TokenBalance> balances = new ArrayList<>();
+        List<EthereumNetwork> orderedNetworks = new ArrayList<>();
+        EthereumNetwork selectedNetwork = getSelectedNetwork();
+        orderedNetworks.add(selectedNetwork);
+        for (EthereumNetwork network : EthereumNetworkRegistry.getAll(appPreferences)) {
+            if (selectedNetwork.isSameNetwork(network)) {
+                continue;
+            }
+            orderedNetworks.add(network);
         }
 
+        for (EthereumNetwork network : orderedNetworks) {
+            if (!network.hasRpcUrl()) {
+                continue;
+            }
+            try {
+                BigDecimal nativeBalance = ethereumService.getBalance(walletAddress, network);
+                PriceRepository.PriceSnapshot priceSnapshot = priceRepository.getLatestPrice(network);
+                balances.add(new TokenBalance(
+                        network.getNativeAssetName(),
+                        network.getDisplayName(),
+                        network.getNativeSymbol(),
+                        nativeBalance,
+                        null,
+                        priceSnapshot.idr,
+                        priceSnapshot.usd,
+                        true
+                ));
+            } catch (Exception ignored) {
+                // Skip broken RPCs so one bad endpoint does not block the full home portfolio.
+            }
+        }
+        return balances;
+    }
+
+    private List<TokenBalance> loadTrackedTokenBalances(String walletAddress, EthereumNetwork network) throws Exception {
+        if (!EthereumNetwork.SEPOLIA.isSameNetwork(network)) {
+            return Collections.emptyList();
+        }
         List<TokenBalance> tokens = new ArrayList<>();
-        PriceRepository.PriceSnapshot ethPrice = priceRepository.getLatestEthPrice();
+        PriceRepository.PriceSnapshot nativePrice = priceRepository.getLatestPrice(network);
 
         if (BuildConfig.MATS_TOKEN_ADDRESS != null && !BuildConfig.MATS_TOKEN_ADDRESS.isEmpty()) {
             int matsDecimals = 18;
@@ -98,11 +150,13 @@ public class WalletRepository {
             }
             tokens.add(new TokenBalance(
                     "Mats Token",
+                    network.getDisplayName(),
                     "MATS",
                     matsBalance,
                     "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
-                    FormatUtils.safeMultiply(matsUnitPriceEth, ethPrice.idr),
-                    FormatUtils.safeMultiply(matsUnitPriceEth, ethPrice.usd)
+                    FormatUtils.safeMultiply(matsUnitPriceEth, nativePrice.idr),
+                    FormatUtils.safeMultiply(matsUnitPriceEth, nativePrice.usd),
+                    false
             ));
         }
 
@@ -113,11 +167,13 @@ public class WalletRepository {
             BigDecimal idrxUnitPriceIdr = "IDRX".equalsIgnoreCase(idrxSymbol) ? BigDecimal.ONE : BigDecimal.ZERO;
             tokens.add(new TokenBalance(
                     "IDRX Token",
+                    network.getDisplayName(),
                     idrxSymbol == null || idrxSymbol.isEmpty() ? "IDRX" : idrxSymbol,
                     idrxBalance,
                     null,
                     idrxUnitPriceIdr,
-                    BigDecimal.ZERO
+                    BigDecimal.ZERO,
+                    false
             ));
         }
         return tokens;
