@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <base-config cleartextTrafficPermitted="false" />
+    <!-- Dev wallet ini masih perlu akses HTTP lokal untuk buy server/test checkout. -->
+    <base-config cleartextTrafficPermitted="true" />
 
     <!-- Emulator Android memakai 10.0.2.2 untuk mengakses server lokal komputer. -->
     <domain-config cleartextTrafficPermitted="true">

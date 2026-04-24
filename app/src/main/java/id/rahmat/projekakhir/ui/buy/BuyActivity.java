@@ -48,6 +48,7 @@ public class BuyActivity extends BaseActivity {
     private final StringBuilder amountDigits = new StringBuilder();
     private BigDecimal ethPriceIdr = BigDecimal.ZERO;
     private final DecimalFormat idrFormatter = new DecimalFormat("#,###", DecimalFormatSymbols.getInstance(Locale.forLanguageTag("id-ID")));
+    private final DecimalFormat ethEstimateFormatter = new DecimalFormat("0.00000000", DecimalFormatSymbols.getInstance(Locale.US));
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(4, TimeUnit.SECONDS)
             .readTimeout(8, TimeUnit.SECONDS)
@@ -114,10 +115,10 @@ public class BuyActivity extends BaseActivity {
 
         BigDecimal ethAmount = calculateEstimatedEth(amountIdr);
         if (ethAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            binding.textEthEstimate.setText("0.000000");
+            binding.textEthEstimate.setText("0.00000000");
             return;
         }
-        binding.textEthEstimate.setText(ethAmount.stripTrailingZeros().toPlainString());
+        binding.textEthEstimate.setText(ethEstimateFormatter.format(ethAmount));
     }
 
     private BigDecimal calculateEstimatedEth(BigDecimal amountIdr) {

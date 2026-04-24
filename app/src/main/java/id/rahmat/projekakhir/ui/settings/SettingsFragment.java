@@ -5,6 +5,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -146,41 +149,59 @@ public class SettingsFragment extends BaseFragment {
 
     private void showNetworkPicker() {
         List<EthereumNetwork> networks = EthereumNetworkRegistry.getAll(appPreferences);
-        String[] labels = new String[networks.size()];
-        int checkedItem = 0;
         String selectedKey = appPreferences.getSelectedNetwork();
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_network_picker, null, false);
+        LinearLayout container = view.findViewById(R.id.networkOptionsContainer);
 
-        for (int index = 0; index < networks.size(); index++) {
-            EthereumNetwork network = networks.get(index);
-            String rpcState = network.hasRpcUrl()
-                    ? getString(R.string.network_rpc_ready)
-                    : getString(R.string.network_rpc_missing);
-            labels[index] = getString(
-                    network.isCustom() ? R.string.network_picker_item_custom : R.string.network_picker_item,
-                    network.getDisplayName(),
-                    String.valueOf(network.getChainId()),
-                    rpcState
-            );
-            if (network.getKey().equalsIgnoreCase(selectedKey)) {
-                checkedItem = index;
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(view)
+                .create();
+        dialog.setOnShowListener(dialogInterface -> {
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
             }
+        });
+
+        for (EthereumNetwork network : networks) {
+            View row = LayoutInflater.from(requireContext()).inflate(R.layout.item_network_option, container, false);
+            LinearLayout rowRoot = row.findViewById(R.id.networkOptionRoot);
+            TextView textSymbol = row.findViewById(R.id.textNetworkSymbol);
+            TextView textName = row.findViewById(R.id.textNetworkName);
+            TextView textMeta = row.findViewById(R.id.textNetworkMeta);
+            TextView textStatus = row.findViewById(R.id.textNetworkStatus);
+            ImageView imageSelected = row.findViewById(R.id.imageNetworkSelected);
+
+            boolean isSelected = network.getKey().equalsIgnoreCase(selectedKey);
+            boolean hasRpc = network.hasRpcUrl();
+            textSymbol.setText(network.getNativeSymbol());
+            textName.setText(network.getDisplayName());
+            textMeta.setText(buildNetworkMeta(network));
+            textStatus.setText(isSelected
+                    ? getString(R.string.network_status_selected)
+                    : getString(hasRpc ? R.string.network_rpc_ready : R.string.network_rpc_missing));
+            textStatus.setBackgroundResource(hasRpc
+                    ? R.drawable.bg_network_status_ready
+                    : R.drawable.bg_network_status_missing);
+            if (isSelected) {
+                rowRoot.setBackgroundResource(R.drawable.bg_network_option_selected);
+                imageSelected.setVisibility(View.VISIBLE);
+            }
+
+            rowRoot.setOnClickListener(v -> {
+                if (!network.hasRpcUrl()) {
+                    showMessage(getString(R.string.network_missing_rpc_select, network.getDisplayName()));
+                    return;
+                }
+                appPreferences.setSelectedNetwork(network.getKey());
+                renderSelectedNetwork();
+                showMessage(getString(R.string.network_selected_message, network.getDisplayName()));
+                dialog.dismiss();
+            });
+            container.addView(row);
         }
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.network_picker_title)
-                .setSingleChoiceItems(labels, checkedItem, (dialog, which) -> {
-                    EthereumNetwork network = networks.get(which);
-                    if (!network.hasRpcUrl()) {
-                        showMessage(getString(R.string.network_missing_rpc_select, network.getDisplayName()));
-                        return;
-                    }
-                    appPreferences.setSelectedNetwork(network.getKey());
-                    renderSelectedNetwork();
-                    showMessage(getString(R.string.network_selected_message, network.getDisplayName()));
-                    dialog.dismiss();
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+        view.findViewById(R.id.buttonCloseNetworkPicker).setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     private void showAddCustomNetworkDialog() {
@@ -193,13 +214,16 @@ public class SettingsFragment extends BaseFragment {
         TextInputEditText inputExplorerUrl = view.findViewById(R.id.inputNetworkExplorerUrl);
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.network_form_title)
                 .setView(view)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.network_form_save, null)
                 .create();
+        dialog.setOnShowListener(dialogInterface -> {
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            }
+        });
         dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+        view.findViewById(R.id.buttonCancelCustomNetwork).setOnClickListener(v -> dialog.dismiss());
+        view.findViewById(R.id.buttonSaveCustomNetwork).setOnClickListener(v -> {
             String displayName = textOf(inputName);
             String symbol = textOf(inputSymbol);
             String chainIdRaw = textOf(inputChainId);
@@ -235,10 +259,15 @@ public class SettingsFragment extends BaseFragment {
         String rpcState = network.hasRpcUrl()
                 ? getString(R.string.network_rpc_ready)
                 : getString(R.string.network_rpc_missing);
-        String suffix = network.isCustom() ? " • " + getString(R.string.network_custom_suffix) : "";
+        String suffix = network.isCustom() ? " - " + getString(R.string.network_custom_suffix) : "";
         binding.textSelectedNetworkMeta.setText(
-                "Chain " + network.getChainId() + " • " + network.getNativeSymbol() + " • " + rpcState + suffix
+                "Chain " + network.getChainId() + " - " + network.getNativeSymbol() + " - " + rpcState + suffix
         );
+    }
+
+    private String buildNetworkMeta(EthereumNetwork network) {
+        String suffix = network.isCustom() ? " - " + getString(R.string.network_custom_suffix) : "";
+        return "Chain " + network.getChainId() + " - " + network.getNativeSymbol() + suffix;
     }
 
     private void openGithubProfile() {
