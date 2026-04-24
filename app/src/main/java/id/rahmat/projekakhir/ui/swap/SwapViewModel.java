@@ -28,7 +28,12 @@ public class SwapViewModel extends AndroidViewModel {
 
     public enum Asset {
         MATS,
-        IDRX
+        IDRX,
+        ETH,
+        BNB,
+        AVAX,
+        POL,
+        FTM
     }
 
     public static class SwapAssetConfig {
@@ -116,9 +121,34 @@ public class SwapViewModel extends AndroidViewModel {
         return getConfig(selectedAsset).symbol;
     }
 
+    public String getAssetSymbol(Asset asset) {
+        return getConfig(asset).symbol;
+    }
+
     public String getAssetDisplayLabel(Asset asset) {
         SwapAssetConfig config = getConfig(asset);
-        return isSwapReady(asset) ? config.symbol : config.symbol + " (Segera hadir)";
+        String base = config.symbol + " • " + getAssetName(asset);
+        return isSwapReady(asset) ? base : base + " (Segera hadir)";
+    }
+
+    public String getAssetName(Asset asset) {
+        switch (asset) {
+            case IDRX:
+                return "IDRX Token";
+            case ETH:
+                return "Ethereum";
+            case BNB:
+                return "BNB Smart Chain";
+            case AVAX:
+                return "Avalanche";
+            case POL:
+                return "Polygon";
+            case FTM:
+                return "Fantom";
+            case MATS:
+            default:
+                return "Mats Token";
+        }
     }
 
     public String getTokenToEthLabel() {
@@ -303,6 +333,13 @@ public class SwapViewModel extends AndroidViewModel {
     }
 
     private boolean hasTokenFor(Asset asset) {
+        if (asset == Asset.ETH
+                || asset == Asset.BNB
+                || asset == Asset.AVAX
+                || asset == Asset.POL
+                || asset == Asset.FTM) {
+            return true;
+        }
         SwapAssetConfig config = getConfig(asset);
         return config.tokenAddress != null && !config.tokenAddress.isEmpty();
     }
@@ -315,22 +352,35 @@ public class SwapViewModel extends AndroidViewModel {
     }
 
     private SwapAssetConfig getConfig(Asset asset) {
-        if (asset == Asset.IDRX) {
-            return new SwapAssetConfig(
-                    Asset.IDRX,
-                    "IDRX",
-                    BuildConfig.IDRX_TOKEN_ADDRESS,
-                    BuildConfig.IDRX_SWAP_POOL_ADDRESS,
-                    18
-            );
+        switch (asset) {
+            case IDRX:
+                return new SwapAssetConfig(
+                        Asset.IDRX,
+                        "IDRX",
+                        BuildConfig.IDRX_TOKEN_ADDRESS,
+                        BuildConfig.IDRX_SWAP_POOL_ADDRESS,
+                        18
+                );
+            case ETH:
+                return new SwapAssetConfig(Asset.ETH, "ETH", "", "", 18);
+            case BNB:
+                return new SwapAssetConfig(Asset.BNB, "BNB", "", "", 18);
+            case AVAX:
+                return new SwapAssetConfig(Asset.AVAX, "AVAX", "", "", 18);
+            case POL:
+                return new SwapAssetConfig(Asset.POL, "POL", "", "", 18);
+            case FTM:
+                return new SwapAssetConfig(Asset.FTM, "FTM", "", "", 18);
+            case MATS:
+            default:
+                return new SwapAssetConfig(
+                        Asset.MATS,
+                        "MATS",
+                        BuildConfig.MATS_TOKEN_ADDRESS,
+                        BuildConfig.MATS_SWAP_POOL_ADDRESS,
+                        18
+                );
         }
-        return new SwapAssetConfig(
-                Asset.MATS,
-                "MATS",
-                BuildConfig.MATS_TOKEN_ADDRESS,
-                BuildConfig.MATS_SWAP_POOL_ADDRESS,
-                18
-        );
     }
 
     private String shortenHash(String value) {

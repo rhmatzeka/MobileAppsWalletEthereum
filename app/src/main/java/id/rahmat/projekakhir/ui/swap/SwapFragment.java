@@ -8,10 +8,13 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -32,7 +35,6 @@ public class SwapFragment extends BaseFragment {
     private SwapViewModel.Direction currentDirection = SwapViewModel.Direction.TOKEN_TO_ETH;
     private final List<SwapViewModel.Asset> assetOptions = new ArrayList<>();
     private final List<String> assetLabels = new ArrayList<>();
-    private final List<String> directionLabels = new ArrayList<>();
 
     @Nullable
     @Override
@@ -58,57 +60,20 @@ public class SwapFragment extends BaseFragment {
     private void setupDropdowns() {
         assetOptions.clear();
         assetLabels.clear();
-        if (viewModel.hasAsset(SwapViewModel.Asset.MATS)) {
-            assetOptions.add(SwapViewModel.Asset.MATS);
-            assetLabels.add(viewModel.getAssetDisplayLabel(SwapViewModel.Asset.MATS));
+        for (SwapViewModel.Asset asset : SwapViewModel.Asset.values()) {
+            if (!viewModel.hasAsset(asset)) {
+                continue;
+            }
+            assetOptions.add(asset);
+            assetLabels.add(viewModel.getAssetDisplayLabel(asset));
         }
-        if (viewModel.hasAsset(SwapViewModel.Asset.IDRX)) {
-            assetOptions.add(SwapViewModel.Asset.IDRX);
-            assetLabels.add(viewModel.getAssetDisplayLabel(SwapViewModel.Asset.IDRX));
-        }
-
-        ArrayAdapter<String> assetAdapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_list_item_1,
-                assetLabels
-        );
-        binding.inputSwapAsset.setAdapter(assetAdapter);
-
-        int selectedAssetIndex = Math.max(0, assetOptions.indexOf(viewModel.getSelectedAsset()));
-        if (!assetLabels.isEmpty()) {
-            binding.inputSwapAsset.setText(assetLabels.get(selectedAssetIndex), false);
-        }
-
-        rebuildDirectionDropdown();
-    }
-
-    private void rebuildDirectionDropdown() {
-        directionLabels.clear();
-        directionLabels.add(viewModel.getTokenToEthLabel());
-        directionLabels.add(viewModel.getEthToTokenLabel());
-
-        ArrayAdapter<String> directionAdapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_list_item_1,
-                directionLabels
-        );
-        binding.inputSwapDirection.setAdapter(directionAdapter);
-        binding.inputSwapDirection.setText(directionLabels.get(currentDirection == SwapViewModel.Direction.TOKEN_TO_ETH ? 0 : 1), false);
     }
 
     private void setupListeners() {
-        binding.inputSwapAsset.setOnItemClickListener((parent, itemView, position, id) -> {
-            if (position < 0 || position >= assetOptions.size()) {
-                return;
-            }
-            viewModel.setSelectedAsset(assetOptions.get(position));
-            rebuildDirectionDropdown();
-            syncSwapUi();
-            refreshQuote();
-        });
-
-        binding.inputSwapDirection.setOnItemClickListener((parent, itemView, position, id) -> {
-            currentDirection = position == 1
+        binding.cardSwapFromAsset.setOnClickListener(v -> openAssetPickerIfNeeded());
+        binding.cardSwapToAsset.setOnClickListener(v -> openAssetPickerIfNeeded());
+        binding.buttonSwapDirection.setOnClickListener(v -> {
+            currentDirection = currentDirection == SwapViewModel.Direction.TOKEN_TO_ETH
                     ? SwapViewModel.Direction.ETH_TO_TOKEN
                     : SwapViewModel.Direction.TOKEN_TO_ETH;
             syncSwapUi();
@@ -135,7 +100,7 @@ public class SwapFragment extends BaseFragment {
     }
 
     private void observeState() {
-        viewModel.getQuoteState().observe(getViewLifecycleOwner(), quote -> binding.textSwapQuote.setText(quote));
+        viewModel.getQuoteState().observe(getViewLifecycleOwner(), this::renderQuote);
         viewModel.getApprovalRequired().observe(getViewLifecycleOwner(), required ->
                 binding.buttonApproveSwap.setVisibility(Boolean.TRUE.equals(required) && viewModel.isSelectedAssetReady()
                         ? View.VISIBLE : View.GONE));
@@ -165,11 +130,153 @@ public class SwapFragment extends BaseFragment {
     private void syncSwapUi() {
         binding.buttonApproveSwap.setText(viewModel.getApproveLabel());
         binding.buttonExecuteSwap.setText(viewModel.isSelectedAssetReady()
-                ? viewModel.getExecuteLabel()
+                ? getString(R.string.continue_action)
                 : getString(R.string.swap_coming_soon_action));
         binding.buttonExecuteSwap.setEnabled(viewModel.isSelectedAssetReady());
         binding.textSwapNote.setText(viewModel.getPoolNote());
         binding.buttonApproveSwap.setVisibility(viewModel.isSelectedAssetReady() ? binding.buttonApproveSwap.getVisibility() : View.GONE);
+        binding.inputSwapAmount.setHint(currentDirection == SwapViewModel.Direction.TOKEN_TO_ETH
+                ? viewModel.getAssetSymbol(viewModel.getSelectedAsset())
+                : "ETH");
+
+        boolean tokenIsFrom = currentDirection == SwapViewModel.Direction.TOKEN_TO_ETH;
+        bindAssetCard(
+                tokenIsFrom,
+                binding.imageSwapFromIcon,
+                binding.textSwapFromSymbol,
+                binding.textSwapFromName,
+                binding.textSwapFromMeta
+        );
+        bindAssetCard(
+                !tokenIsFrom,
+                binding.imageSwapToIcon,
+                binding.textSwapToSymbol,
+                binding.textSwapToName,
+                binding.textSwapQuoteMeta
+        );
+    }
+
+    private void bindAssetCard(boolean tokenCard, android.widget.ImageView iconView,
+                               android.widget.TextView symbolView,
+                               android.widget.TextView nameView,
+                               android.widget.TextView metaView) {
+        if (tokenCard) {
+            SwapViewModel.Asset asset = viewModel.getSelectedAsset();
+            symbolView.setText(viewModel.getAssetSymbol(asset));
+            nameView.setText(getAssetName(asset));
+            iconView.setImageResource(getAssetIcon(asset));
+            if (metaView == binding.textSwapFromMeta) {
+                metaView.setText(getString(R.string.swap_input_caption));
+            }
+            return;
+        }
+
+        symbolView.setText("ETH");
+        nameView.setText(getString(R.string.swap_asset_name_eth));
+        iconView.setImageResource(R.drawable.ic_token_eth_real);
+        if (metaView == binding.textSwapFromMeta) {
+            metaView.setText(getString(R.string.swap_input_caption));
+        }
+    }
+
+    private void renderQuote(String quote) {
+        String safeQuote = quote == null ? "" : quote.trim();
+        String prefix = getString(R.string.swap_quote_receive_prefix);
+        if (!safeQuote.isEmpty() && safeQuote.startsWith(prefix)) {
+            String value = safeQuote.substring(prefix.length()).trim();
+            binding.textSwapQuote.setText(value);
+            binding.textSwapQuoteMeta.setText(getString(R.string.swap_quote_label_small));
+            return;
+        }
+
+        if (safeQuote.isEmpty() || safeQuote.equals(getString(R.string.swap_quote_placeholder))) {
+            binding.textSwapQuote.setText("0");
+            binding.textSwapQuoteMeta.setText(getString(R.string.swap_quote_placeholder));
+            return;
+        }
+
+        binding.textSwapQuote.setText("0");
+        binding.textSwapQuoteMeta.setText(safeQuote);
+    }
+
+    private void openAssetPickerIfNeeded() {
+        if (assetOptions.isEmpty()) {
+            return;
+        }
+
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_swap_asset_picker, null, false);
+        LinearLayout container = view.findViewById(R.id.swapAssetOptionsContainer);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setView(view)
+                .create();
+        dialog.setOnShowListener(dialogInterface -> {
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            }
+        });
+
+        for (SwapViewModel.Asset asset : assetOptions) {
+            View row = LayoutInflater.from(requireContext()).inflate(R.layout.item_swap_asset_option, container, false);
+            LinearLayout rowRoot = row.findViewById(R.id.swapAssetOptionRoot);
+            ImageView imageIcon = row.findViewById(R.id.imageSwapAssetIcon);
+            TextView textSymbol = row.findViewById(R.id.textSwapAssetSymbol);
+            TextView textName = row.findViewById(R.id.textSwapAssetName);
+            TextView textStatus = row.findViewById(R.id.textSwapAssetStatus);
+            ImageView imageSelected = row.findViewById(R.id.imageSwapAssetSelected);
+
+            boolean isSelected = asset == viewModel.getSelectedAsset();
+            boolean isReady = viewModel.isSwapReady(asset);
+            imageIcon.setImageResource(getAssetIcon(asset));
+            textSymbol.setText(viewModel.getAssetSymbol(asset));
+            textName.setText(getAssetName(asset));
+            textStatus.setText(isSelected
+                    ? getString(R.string.swap_asset_status_selected)
+                    : getString(isReady ? R.string.swap_asset_status_ready : R.string.swap_coming_soon_action));
+            textStatus.setBackgroundResource(isReady
+                    ? R.drawable.bg_swap_asset_status_ready
+                    : R.drawable.bg_swap_asset_status_soon);
+
+            if (isSelected) {
+                rowRoot.setBackgroundResource(R.drawable.bg_swap_asset_option_selected);
+                imageSelected.setVisibility(View.VISIBLE);
+            }
+
+            rowRoot.setOnClickListener(v -> {
+                viewModel.setSelectedAsset(asset);
+                syncSwapUi();
+                refreshQuote();
+                dialog.dismiss();
+            });
+            container.addView(row);
+        }
+
+        view.findViewById(R.id.buttonCloseSwapAssetPicker).setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private int getAssetIcon(SwapViewModel.Asset asset) {
+        switch (asset) {
+            case IDRX:
+                return R.drawable.ic_token_idrx;
+            case ETH:
+                return R.drawable.ic_token_eth_real;
+            case BNB:
+                return R.drawable.ic_token_bnb_real;
+            case AVAX:
+                return R.drawable.ic_token_avax_real;
+            case POL:
+                return R.drawable.ic_token_polygon_real;
+            case FTM:
+                return R.drawable.ic_token_fantom;
+            case MATS:
+            default:
+                return R.drawable.ic_token_mats;
+        }
+    }
+
+    private String getAssetName(SwapViewModel.Asset asset) {
+        return viewModel.getAssetName(asset);
     }
 
     private String getAmountText() {
