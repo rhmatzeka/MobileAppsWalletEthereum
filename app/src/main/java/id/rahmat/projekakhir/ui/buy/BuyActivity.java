@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import id.rahmat.projekakhir.BuildConfig;
 import id.rahmat.projekakhir.R;
@@ -32,6 +34,7 @@ import id.rahmat.projekakhir.di.ServiceLocator;
 import id.rahmat.projekakhir.ui.base.BaseActivity;
 import id.rahmat.projekakhir.utils.AppExecutors;
 import id.rahmat.projekakhir.utils.WindowInsetsHelper;
+import id.rahmat.projekakhir.wallet.EthereumNetwork;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -45,7 +48,11 @@ public class BuyActivity extends BaseActivity {
     private final StringBuilder amountDigits = new StringBuilder();
     private BigDecimal ethPriceIdr = BigDecimal.ZERO;
     private final DecimalFormat idrFormatter = new DecimalFormat("#,###", DecimalFormatSymbols.getInstance(Locale.forLanguageTag("id-ID")));
-    private final OkHttpClient httpClient = new OkHttpClient();
+    private final OkHttpClient httpClient = new OkHttpClient.Builder()
+            .connectTimeout(4, TimeUnit.SECONDS)
+            .readTimeout(8, TimeUnit.SECONDS)
+            .writeTimeout(8, TimeUnit.SECONDS)
+            .build();
     private final Gson gson = new Gson();
     private boolean isCreatingOrder = false;
     private PaymentMethod selectedPaymentMethod = PaymentMethod.ALL;
@@ -132,7 +139,7 @@ public class BuyActivity extends BaseActivity {
             try {
                 PriceRepository.PriceSnapshot snapshot = ServiceLocator
                         .getPriceRepository(this)
-                        .getLatestEthPrice();
+                        .getLatestPrice(EthereumNetwork.MAINNET);
                 ethPriceIdr = snapshot == null ? BigDecimal.ZERO : snapshot.idr;
             } catch (Exception exception) {
                 ethPriceIdr = BigDecimal.ZERO;
@@ -148,13 +155,13 @@ public class BuyActivity extends BaseActivity {
             return;
         }
 
+        String paymentUrl = safeTrim(BuildConfig.MIDTRANS_PAYMENT_URL);
         String backendBaseUrl = safeTrim(BuildConfig.BUY_BACKEND_BASE_URL);
         if (!backendBaseUrl.isEmpty()) {
-            createBackendBuyOrder(amountIdr);
+            createBackendBuyOrder(amountIdr, paymentUrl);
             return;
         }
 
-        String paymentUrl = safeTrim(BuildConfig.MIDTRANS_PAYMENT_URL);
         if (paymentUrl.isEmpty()) {
             showMessage(getString(R.string.buy_midtrans_missing));
             return;
@@ -163,7 +170,7 @@ public class BuyActivity extends BaseActivity {
         openPaymentUrl(paymentUrl);
     }
 
-    private void createBackendBuyOrder(BigDecimal amountIdr) {
+    private void createBackendBuyOrder(BigDecimal amountIdr, String fallbackPaymentUrl) {
         if (isCreatingOrder) {
             return;
         }
@@ -204,6 +211,11 @@ public class BuyActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     isCreatingOrder = false;
                     binding.buttonContinue.setEnabled(true);
+                    if (shouldUseFallbackPayment(exception, fallbackPaymentUrl)) {
+                        showMessage(getString(R.string.buy_midtrans_opening));
+                        openPaymentUrl(fallbackPaymentUrl);
+                        return;
+                    }
                     showMessage(formatBuyOrderError(exception));
                 });
             }
@@ -245,11 +257,19 @@ public class BuyActivity extends BaseActivity {
     private List<String> getBackendBaseUrls() {
         LinkedHashSet<String> urls = new LinkedHashSet<>();
         String configuredUrl = safeTrim(BuildConfig.BUY_BACKEND_BASE_URL);
-        if (!configuredUrl.isEmpty()) {
-            urls.add(configuredUrl);
+        if (isProbablyEmulator()) {
+            urls.add("http://10.0.2.2:8787/");
+            urls.add("http://127.0.0.1:8787/");
+            if (!configuredUrl.isEmpty()) {
+                urls.add(configuredUrl);
+            }
+        } else {
+            if (!configuredUrl.isEmpty()) {
+                urls.add(configuredUrl);
+            }
+            urls.add("http://10.0.2.2:8787/");
+            urls.add("http://127.0.0.1:8787/");
         }
-        urls.add("http://10.0.2.2:8787/");
-        urls.add("http://127.0.0.1:8787/");
         return new ArrayList<>(urls);
     }
 
@@ -326,9 +346,7 @@ public class BuyActivity extends BaseActivity {
     }
 
     private String formatBuyOrderError(Exception exception) {
-        if (exception instanceof ConnectException
-                || exception instanceof SocketTimeoutException
-                || exception instanceof UnknownHostException) {
+        if (isBackendUnavailable(exception)) {
             return getString(R.string.buy_server_unreachable);
         }
 
@@ -340,6 +358,23 @@ public class BuyActivity extends BaseActivity {
             message = message.substring(0, 120) + "...";
         }
         return getString(R.string.buy_order_failed_detail, message);
+    }
+
+    private boolean shouldUseFallbackPayment(Exception exception, String fallbackPaymentUrl) {
+        return !safeTrim(fallbackPaymentUrl).isEmpty() && isBackendUnavailable(exception);
+    }
+
+    private boolean isBackendUnavailable(Exception exception) {
+        return exception instanceof ConnectException
+                || exception instanceof SocketTimeoutException
+                || exception instanceof UnknownHostException;
+    }
+
+    private boolean isProbablyEmulator() {
+        return Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.contains("emulator")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86");
     }
 
     private enum PaymentMethod {

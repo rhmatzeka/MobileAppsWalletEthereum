@@ -1,10 +1,12 @@
 # Ethernest
 
-Ethernest adalah aplikasi Android e-wallet Ethereum berbasis Java dengan tampilan modern, keamanan lokal, integrasi Web3, swap token testnet, NFT, dan flow pembelian ETH melalui backend Midtrans.
+Ethernest adalah aplikasi Android e-wallet multi-chain berbasis Java dengan tampilan modern, keamanan lokal, integrasi Web3, swap token testnet, NFT, custom RPC EVM, dan flow pembelian ETH melalui backend Midtrans.
 
 ## Fitur
 - Onboarding wallet, import wallet, PIN login, dan biometric-ready flow.
+- Dukungan network EVM preset dan custom RPC: Ethereum, Sepolia, BSC, Avalanche, Polygon, Arbitrum, Optimism, Base, dan Fantom.
 - Saldo ETH, token ERC-20, NFT ERC-721/ERC-1155, chart candlestick, serta histori transaksi.
+- Home asset list multi-chain dengan icon coin real untuk ETH, BNB, AVAX, dan Polygon.
 - Kirim dan terima ETH dengan QR, set amount, share address, dan deposit from exchange.
 - Swap testnet untuk MATS dan IDRX melalui smart contract pool sederhana.
 - Buy ETH dengan halaman pembayaran in-app WebView, backend Midtrans, dan harga ETH/IDR realtime.
@@ -22,12 +24,16 @@ Ethernest adalah aplikasi Android e-wallet Ethereum berbasis Java dengan tampila
 2. Isi `local.properties` (root project):
 ```
 INFURA_PROJECT_ID=xxx
+BSC_RPC_URL=https://bsc-dataseed.bnbchain.org
+AVALANCHE_RPC_URL=https://api.avax.network/ext/bc/C/rpc
+POLYGON_RPC_URL=https://polygon.drpc.org
 ETHERSCAN_API_KEY=xxx
 MATS_TOKEN_ADDRESS=xxx
 MATS_SWAP_POOL_ADDRESS=xxx
 IDRX_TOKEN_ADDRESS=xxx
 IDRX_SWAP_POOL_ADDRESS=xxx
 BUY_BACKEND_BASE_URL=http://10.0.2.2:8787/
+MIDTRANS_PAYMENT_URL=
 ```
 3. Sync Gradle dan run aplikasi.
 
@@ -35,6 +41,7 @@ Catatan:
 - Emulator Android memakai `http://10.0.2.2:8787/`.
 - HP fisik memakai IP laptop/VPS, contoh `http://192.168.1.10:8787/`.
 - Saat development via USB, kamu bisa menjalankan `adb reverse tcp:8787 tcp:8787`.
+- Flow Buy di emulator sekarang memprioritaskan `10.0.2.2` lebih dulu supaya dev checkout lokal tidak nyasar ke IP lama.
 
 ## Buy Server + Midtrans
 Flow beli tidak menyimpan private key di Android. Aplikasi membuat order ke backend, backend membuat transaksi Midtrans, pembayaran ditampilkan di dalam aplikasi via WebView, lalu backend mengirim ETH ke wallet setelah status pembayaran berhasil.
@@ -66,6 +73,11 @@ GET  /health
 GET  /api/price/eth-idr
 POST /api/buy/eth
 POST /api/midtrans/notification
+```
+
+Quick check lokal:
+```
+http://127.0.0.1:8787/health
 ```
 
 Untuk production, jalankan buy server di VPS/domain HTTPS dan pasang URL webhook Midtrans ke:

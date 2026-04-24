@@ -58,6 +58,11 @@ Run:
 npm run start:buy-server
 ```
 
+Quick health check:
+```
+http://127.0.0.1:8787/health
+```
+
 Price endpoints use realtime market data in this order:
 - CoinGecko ETH/IDR
 - Indodax ETH/IDR
@@ -72,6 +77,8 @@ For a physical device, use the laptop/VPS IP instead of `10.0.2.2`, or run:
 ```
 adb reverse tcp:8787 tcp:8787
 ```
+
+For emulator testing, `10.0.2.2` should be the main Android fallback URL.
 
 Midtrans webhook URL:
 ```

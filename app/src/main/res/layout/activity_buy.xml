@@ -127,7 +127,7 @@
                     <ImageView
                         android:layout_width="28dp"
                         android:layout_height="28dp"
-                        android:src="@drawable/ic_token_eth" />
+                        android:src="@drawable/ic_token_eth_real" />
 
                     <TextView
                         android:layout_width="wrap_content"
