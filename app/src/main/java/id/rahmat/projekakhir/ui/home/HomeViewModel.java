@@ -211,7 +211,7 @@ public class HomeViewModel extends AndroidViewModel {
             return R.drawable.ic_token_mats;
         }
         if ("IDRX".equalsIgnoreCase(symbol)) {
-            return R.drawable.ic_token_idrx;
+            return R.drawable.ic_token_idrx_real;
         }
         if ("USDT".equalsIgnoreCase(symbol)) {
             return R.drawable.ic_token_usdt_real;

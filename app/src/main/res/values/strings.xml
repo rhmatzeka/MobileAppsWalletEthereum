@@ -273,6 +273,7 @@
     <string name="swap_success_dialog_title">Swap Berhasil</string>
     <string name="swap_success_dialog_message">Transaksi %1$s sudah dikirim ke jaringan aktif dan sedang diproses on-chain.</string>
     <string name="swap_success_status">Swap %1$s berhasil dikirim ke blockchain.</string>
+    <string name="swap_waiting_receipt">Mengirim swap dan menunggu konfirmasi blockchain...</string>
     <string name="swap_failed">Swap gagal dikirim.</string>
     <string name="swap_quote_failed">Quote swap belum bisa dihitung.</string>
     <string name="swap_invalid_amount">Masukkan jumlah swap yang valid.</string>

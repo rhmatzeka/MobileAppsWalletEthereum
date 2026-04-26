@@ -7,9 +7,11 @@ import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthEstimateGas;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.RawTransactionManager;
 import org.web3j.tx.Transfer;
+import org.web3j.tx.response.PollingTransactionReceiptProcessor;
 import org.web3j.utils.Convert;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
@@ -255,7 +257,13 @@ public class EthereumService {
         if (response.hasError()) {
             throw new IllegalStateException(response.getError().getMessage());
         }
-        return response.getTransactionHash();
+        String transactionHash = response.getTransactionHash();
+        TransactionReceipt receipt = new PollingTransactionReceiptProcessor(web3j, 3_000L, 40)
+                .waitForTransactionReceipt(transactionHash);
+        if (!receipt.isStatusOK()) {
+            throw new IllegalStateException("Transaction reverted: " + transactionHash);
+        }
+        return transactionHash;
     }
 
     private BigInteger estimateGasLimit(String from, String to, String data, BigInteger value,

@@ -282,6 +282,7 @@ public class SwapViewModel extends AndroidViewModel {
                     return;
                 }
 
+                eventState.postValue(getApplication().getString(R.string.swap_waiting_receipt));
                 Credentials credentials = walletRepository.getWalletManager().getCredentials();
                 EthereumNetwork network = walletRepository.getSelectedNetwork();
                 String transactionHash;

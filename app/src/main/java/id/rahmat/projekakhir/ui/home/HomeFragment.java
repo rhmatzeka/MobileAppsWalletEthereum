@@ -62,6 +62,11 @@ public class HomeFragment extends BaseFragment {
         setupActions();
         setupAssetTabs();
         observeState();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         viewModel.refresh();
     }
 
