@@ -6,10 +6,10 @@ Ethernest adalah aplikasi Android e-wallet multi-chain berbasis Java dengan tamp
 - Onboarding wallet, import wallet, PIN login, dan biometric-ready flow.
 - Dukungan network EVM preset dan custom RPC: Ethereum, Sepolia, BSC, Avalanche, Polygon, Arbitrum, Optimism, Base, dan Fantom.
 - Saldo ETH, token ERC-20, NFT ERC-721/ERC-1155, chart candlestick, serta histori transaksi.
-- Home asset list multi-chain dengan icon coin real untuk ETH, BNB, AVAX, dan Polygon.
+- Home asset list multi-chain dengan icon coin real untuk ETH, BNB, AVAX, Polygon, dan token EVM populer.
 - Kirim dan terima ETH dengan QR, set amount, share address, dan deposit from exchange.
-- Swap testnet real untuk MATS, IDRX, dan slot token tambahan yang sudah punya pool on-chain.
-- UI swap sekarang memakai kartu `From/To`, picker token custom, dan hanya menampilkan token dengan route pool aktif.
+- Swap real untuk MATS, IDRX, preset token EVM populer, dan slot token tambahan yang sudah punya pool on-chain.
+- UI swap memakai kartu `From/To`, picker token custom, status pool aktif/butuh pool, dan icon token yang sesuai.
 - Buy ETH dengan halaman pembayaran in-app WebView, backend Midtrans, dan harga ETH/IDR realtime.
 
 ## Tech Stack
@@ -33,6 +33,12 @@ MATS_TOKEN_ADDRESS=xxx
 MATS_SWAP_POOL_ADDRESS=xxx
 IDRX_TOKEN_ADDRESS=xxx
 IDRX_SWAP_POOL_ADDRESS=xxx
+SWAP_USDT_TOKEN_ADDRESS=
+SWAP_USDT_POOL_ADDRESS=
+SWAP_USDT_DECIMALS=6
+SWAP_USDC_TOKEN_ADDRESS=
+SWAP_USDC_POOL_ADDRESS=
+SWAP_USDC_DECIMALS=6
 SWAP_TOKEN_1_NAME=Example Token
 SWAP_TOKEN_1_SYMBOL=EXT
 SWAP_TOKEN_1_ADDRESS=xxx
@@ -97,8 +103,9 @@ Folder `smart-contracts` berisi ERC-20 token dan pool swap testnet.
 
 Catatan swap:
 - Route swap on-chain aktif mengikuti pool yang kamu deploy, default-nya `MATS` dan `IDRX`.
-- Token tambahan bisa dipakai real swap setelah punya token address, pool address, dan liquidity. Isi slot `SWAP_TOKEN_1..5` di `local.properties`, lalu token otomatis muncul di picker.
-- Token tanpa pool tidak ditampilkan di picker agar tidak terlihat aktif padahal belum bisa transaksi.
+- Preset token populer EVM yang tampil di picker: `USDT`, `USDC`, `DAI`, `WBTC`, `LINK`, `UNI`, `AAVE`, `SHIB`, `PEPE`, `ARB`, dan `OP`.
+- Token tambahan bisa dipakai real swap setelah punya token address, pool address, dan liquidity. Isi preset `SWAP_USDT_*`/`SWAP_USDC_*`/dst atau slot `SWAP_TOKEN_1..12` di `local.properties`.
+- Token tanpa pool tetap tampil sebagai `Butuh pool`, tetapi tombol swap dikunci sampai address pool dan liquidity tersedia.
 
 Langkah cepat:
 ```
@@ -127,6 +134,26 @@ npm run seed:pool
 ```
 
 Untuk deploy pool token lain, isi `POOL_TOKEN_SYMBOL` dan `POOL_TOKEN_ADDRESS`, jalankan `npm run deploy:pool`, lalu salin output `SWAP_TOKEN_1_*` ke `local.properties`. Setelah pool terisi liquidity via `npm run seed:pool`, swap token itu bisa dipakai dari aplikasi.
+
+Flow testnet paling cepat:
+```
+cd smart-contracts
+copy .env.example .env
+```
+Isi minimal:
+```
+INFURA_PROJECT_ID=xxx
+DEPLOYER_PRIVATE_KEY=private_key_wallet_testnet_tanpa_0x
+TEST_SWAP_TOKENS=MATS,IDRX,USDT,USDC,DAI,WBTC,LINK,UNI,AAVE,SHIB,PEPE,ARB,OP
+TEST_POOL_ETH_LIQUIDITY=0.005
+```
+Pastikan wallet deployer punya Sepolia ETH dari faucet, lalu jalankan:
+```
+npm install
+npm run compile
+npm run deploy:testnet-routes
+```
+Script ini deploy mock ERC-20, deploy pool ETH/token, seed liquidity, lalu mencetak baris `local.properties` untuk Android. Salin output itu ke `local.properties`, sync Gradle, lalu jalankan app. Kalau route sudah aktif, status token berubah dari `Butuh pool` menjadi `Aktif`, dan token swap yang sudah dikonfigurasi ikut tampil di Home `Aset Dimiliki`.
 
 ## Keamanan
 - Private key user disimpan terenkripsi di Android Keystore/EncryptedSharedPreferences.

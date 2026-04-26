@@ -10,6 +10,7 @@
     "mint:token": "hardhat run scripts/mintMatsToDeployer.js --network sepolia",
     "deploy:pool": "hardhat run scripts/deployPool.js --network sepolia",
     "deploy:idrx-pool": "hardhat run scripts/deployIdrxPool.js --network sepolia",
+    "deploy:testnet-routes": "hardhat run scripts/deployTestnetSwapRoutes.js --network sepolia",
     "seed:pool": "hardhat run scripts/seedPoolLiquidity.js --network sepolia",
     "start:buy-server": "node server/buyServer.js"
   },

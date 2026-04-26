@@ -34,7 +34,6 @@ public class SwapFragment extends BaseFragment {
     private SwapViewModel viewModel;
     private SwapViewModel.Direction currentDirection = SwapViewModel.Direction.TOKEN_TO_ETH;
     private final List<SwapViewModel.Asset> assetOptions = new ArrayList<>();
-    private final List<String> assetLabels = new ArrayList<>();
 
     @Nullable
     @Override
@@ -59,13 +58,11 @@ public class SwapFragment extends BaseFragment {
 
     private void setupDropdowns() {
         assetOptions.clear();
-        assetLabels.clear();
         for (SwapViewModel.Asset asset : SwapViewModel.Asset.values()) {
             if (!viewModel.hasAsset(asset)) {
                 continue;
             }
             assetOptions.add(asset);
-            assetLabels.add(viewModel.getAssetDisplayLabel(asset));
         }
     }
 
@@ -131,7 +128,7 @@ public class SwapFragment extends BaseFragment {
         binding.buttonApproveSwap.setText(viewModel.getApproveLabel());
         binding.buttonExecuteSwap.setText(viewModel.isSelectedAssetReady()
                 ? getString(R.string.continue_action)
-                : getString(R.string.swap_coming_soon_action));
+                : getString(R.string.swap_pool_required_action));
         binding.buttonExecuteSwap.setEnabled(viewModel.isSelectedAssetReady());
         binding.textSwapNote.setText(viewModel.getPoolNote());
         binding.buttonApproveSwap.setVisibility(viewModel.isSelectedAssetReady() ? binding.buttonApproveSwap.getVisibility() : View.GONE);
@@ -230,10 +227,15 @@ public class SwapFragment extends BaseFragment {
             imageIcon.setImageResource(getAssetIcon(asset));
             textSymbol.setText(viewModel.getAssetSymbol(asset));
             textName.setText(getAssetName(asset));
+            boolean isReady = viewModel.isSwapReady(asset);
             textStatus.setText(isSelected
                     ? getString(R.string.swap_asset_status_selected)
-                    : getString(R.string.swap_asset_status_ready));
-            textStatus.setBackgroundResource(R.drawable.bg_swap_asset_status_ready);
+                    : isReady
+                    ? getString(R.string.swap_asset_status_ready)
+                    : getString(R.string.swap_asset_status_missing_pool));
+            textStatus.setBackgroundResource(isReady
+                    ? R.drawable.bg_swap_asset_status_ready
+                    : R.drawable.bg_swap_asset_status_soon);
 
             if (isSelected) {
                 rowRoot.setBackgroundResource(R.drawable.bg_swap_asset_option_selected);
@@ -254,19 +256,68 @@ public class SwapFragment extends BaseFragment {
     }
 
     private int getAssetIcon(SwapViewModel.Asset asset) {
-        switch (asset) {
-            case IDRX:
-                return R.drawable.ic_token_idrx;
-            case CUSTOM_1:
-            case CUSTOM_2:
-            case CUSTOM_3:
-            case CUSTOM_4:
-            case CUSTOM_5:
-                return R.drawable.ic_token_custom;
-            case MATS:
-            default:
-                return R.drawable.ic_token_mats;
+        return getTokenIcon(viewModel.getAssetSymbol(asset));
+    }
+
+    private int getTokenIcon(String symbol) {
+        if (symbol == null) {
+            return R.drawable.ic_token_custom;
         }
+        if ("ETH".equalsIgnoreCase(symbol) || "WETH".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_eth_real;
+        }
+        if ("MATS".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_mats;
+        }
+        if ("IDRX".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_idrx;
+        }
+        if ("USDT".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_usdt_real;
+        }
+        if ("USDC".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_usdc_real;
+        }
+        if ("DAI".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_dai_real;
+        }
+        if ("WBTC".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_wbtc_real;
+        }
+        if ("LINK".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_link_real;
+        }
+        if ("UNI".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_uni_real;
+        }
+        if ("AAVE".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_aave_real;
+        }
+        if ("SHIB".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_shib_real;
+        }
+        if ("PEPE".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_pepe_real;
+        }
+        if ("ARB".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_arb_real;
+        }
+        if ("OP".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_op_real;
+        }
+        if ("BNB".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_bnb_real;
+        }
+        if ("AVAX".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_avax_real;
+        }
+        if ("POL".equalsIgnoreCase(symbol) || "MATIC".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_polygon_real;
+        }
+        if ("FTM".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_fantom;
+        }
+        return R.drawable.ic_token_custom;
     }
 
     private String getAssetName(SwapViewModel.Asset asset) {
@@ -298,7 +349,9 @@ public class SwapFragment extends BaseFragment {
 
         dialogBinding.buttonCloseSwapSuccess.setOnClickListener(v -> dialog.dismiss());
         dialogBinding.buttonOpenSwapEtherscan.setOnClickListener(v -> {
-            String url = "https://sepolia.etherscan.io/tx/" + event.transactionHash;
+            String url = event.explorerTxUrl == null || event.explorerTxUrl.isEmpty()
+                    ? "https://sepolia.etherscan.io/tx/" + event.transactionHash
+                    : event.explorerTxUrl;
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
         });
         dialog.show();

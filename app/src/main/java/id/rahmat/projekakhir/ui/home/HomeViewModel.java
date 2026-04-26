@@ -213,6 +213,42 @@ public class HomeViewModel extends AndroidViewModel {
         if ("IDRX".equalsIgnoreCase(symbol)) {
             return R.drawable.ic_token_idrx;
         }
+        if ("USDT".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_usdt_real;
+        }
+        if ("USDC".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_usdc_real;
+        }
+        if ("DAI".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_dai_real;
+        }
+        if ("WBTC".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_wbtc_real;
+        }
+        if ("WETH".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_eth_real;
+        }
+        if ("LINK".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_link_real;
+        }
+        if ("UNI".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_uni_real;
+        }
+        if ("AAVE".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_aave_real;
+        }
+        if ("SHIB".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_shib_real;
+        }
+        if ("PEPE".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_pepe_real;
+        }
+        if ("ARB".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_arb_real;
+        }
+        if ("OP".equalsIgnoreCase(symbol)) {
+            return R.drawable.ic_token_op_real;
+        }
         if ("BNB".equalsIgnoreCase(symbol)) {
             return R.drawable.ic_token_bnb_real;
         }

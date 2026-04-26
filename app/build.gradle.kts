@@ -20,6 +20,20 @@ fun localIntProperty(name: String, defaultValue: Int = 18): String {
         ?: defaultValue.toString()
 }
 
+val presetSwapTokenDecimals = mapOf(
+    "USDT" to 6,
+    "USDC" to 6,
+    "DAI" to 18,
+    "WBTC" to 8,
+    "LINK" to 18,
+    "UNI" to 18,
+    "AAVE" to 18,
+    "SHIB" to 18,
+    "PEPE" to 18,
+    "ARB" to 18,
+    "OP" to 18
+)
+
 android {
     namespace = "id.rahmat.projekakhir"
     compileSdk = 36
@@ -53,7 +67,12 @@ android {
         buildConfigField("String", "MATS_SWAP_POOL_ADDRESS", "\"${localProperty("MATS_SWAP_POOL_ADDRESS")}\"")
         buildConfigField("String", "IDRX_TOKEN_ADDRESS", "\"${localProperty("IDRX_TOKEN_ADDRESS")}\"")
         buildConfigField("String", "IDRX_SWAP_POOL_ADDRESS", "\"${localProperty("IDRX_SWAP_POOL_ADDRESS")}\"")
-        for (index in 1..5) {
+        for ((symbol, defaultDecimals) in presetSwapTokenDecimals) {
+            buildConfigField("String", "SWAP_${symbol}_TOKEN_ADDRESS", "\"${localProperty("SWAP_${symbol}_TOKEN_ADDRESS")}\"")
+            buildConfigField("String", "SWAP_${symbol}_POOL_ADDRESS", "\"${localProperty("SWAP_${symbol}_POOL_ADDRESS")}\"")
+            buildConfigField("int", "SWAP_${symbol}_DECIMALS", localIntProperty("SWAP_${symbol}_DECIMALS", defaultDecimals))
+        }
+        for (index in 1..12) {
             buildConfigField("String", "SWAP_TOKEN_${index}_NAME", "\"${localProperty("SWAP_TOKEN_${index}_NAME")}\"")
             buildConfigField("String", "SWAP_TOKEN_${index}_SYMBOL", "\"${localProperty("SWAP_TOKEN_${index}_SYMBOL")}\"")
             buildConfigField("String", "SWAP_TOKEN_${index}_ADDRESS", "\"${localProperty("SWAP_TOKEN_${index}_ADDRESS")}\"")

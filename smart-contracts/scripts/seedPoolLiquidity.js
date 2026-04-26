@@ -17,8 +17,14 @@ async function main() {
   const [deployer] = await hre.ethers.getSigners();
   const token = await hre.ethers.getContractAt("MatsToken", matsTokenAddress, deployer);
   const pool = await hre.ethers.getContractAt("MatsSwapPool", swapPoolAddress, deployer);
+  const tokenMetadata = await hre.ethers.getContractAt(
+    ["function decimals() view returns (uint8)"],
+    matsTokenAddress,
+    deployer
+  );
+  const tokenDecimals = Number(await tokenMetadata.decimals());
 
-  const tokenUnits = hre.ethers.parseUnits(tokenAmount, 18);
+  const tokenUnits = hre.ethers.parseUnits(tokenAmount, tokenDecimals);
   const ethUnits = hre.ethers.parseEther(ethAmount);
 
   const approveTx = await token.approve(swapPoolAddress, tokenUnits);
@@ -29,6 +35,7 @@ async function main() {
 
   console.log("Liquidity added.");
   console.log("Token amount:", tokenAmount, tokenSymbol);
+  console.log("Token decimals:", tokenDecimals);
   console.log("ETH amount:", ethAmount, "ETH");
 }
 

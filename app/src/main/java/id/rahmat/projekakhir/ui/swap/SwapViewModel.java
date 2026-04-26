@@ -29,11 +29,29 @@ public class SwapViewModel extends AndroidViewModel {
     public enum Asset {
         MATS,
         IDRX,
+        USDT,
+        USDC,
+        DAI,
+        WBTC,
+        LINK,
+        UNI,
+        AAVE,
+        SHIB,
+        PEPE,
+        ARB,
+        OP,
         CUSTOM_1,
         CUSTOM_2,
         CUSTOM_3,
         CUSTOM_4,
-        CUSTOM_5
+        CUSTOM_5,
+        CUSTOM_6,
+        CUSTOM_7,
+        CUSTOM_8,
+        CUSTOM_9,
+        CUSTOM_10,
+        CUSTOM_11,
+        CUSTOM_12
     }
 
     public static class SwapAssetConfig {
@@ -59,11 +77,14 @@ public class SwapViewModel extends AndroidViewModel {
         public final String symbol;
         public final String transactionHash;
         public final String shortTransactionHash;
+        public final String explorerTxUrl;
 
-        public SwapSuccessEvent(String symbol, String transactionHash, String shortTransactionHash) {
+        public SwapSuccessEvent(String symbol, String transactionHash, String shortTransactionHash,
+                                String explorerTxUrl) {
             this.symbol = symbol;
             this.transactionHash = transactionHash;
             this.shortTransactionHash = shortTransactionHash;
+            this.explorerTxUrl = explorerTxUrl;
         }
     }
 
@@ -111,7 +132,7 @@ public class SwapViewModel extends AndroidViewModel {
     }
 
     public boolean hasAsset(Asset asset) {
-        return isSwapReady(asset);
+        return isVisibleAsset(asset);
     }
 
     public boolean isSwapReady(Asset asset) {
@@ -129,7 +150,7 @@ public class SwapViewModel extends AndroidViewModel {
     public String getAssetDisplayLabel(Asset asset) {
         SwapAssetConfig config = getConfig(asset);
         String base = config.symbol + " - " + config.name;
-        return isSwapReady(asset) ? base : base + " (Segera hadir)";
+        return isSwapReady(asset) ? base : base + " (Butuh pool)";
     }
 
     public String getAssetName(Asset asset) {
@@ -298,7 +319,8 @@ public class SwapViewModel extends AndroidViewModel {
                 swapSuccessState.postValue(new SwapSuccessEvent(
                         config.symbol,
                         transactionHash,
-                        shortenHash(transactionHash)
+                        shortenHash(transactionHash),
+                        buildExplorerTxUrl(network, transactionHash)
                 ));
             } catch (Exception exception) {
                 eventState.postValue(getApplication().getString(R.string.swap_failed));
@@ -310,7 +332,11 @@ public class SwapViewModel extends AndroidViewModel {
         if (!isSelectedAssetReady()) {
             return getApplication().getString(R.string.swap_asset_coming_soon_note, getAssetSymbol());
         }
-        return getApplication().getString(R.string.swap_pool_note, getAssetSymbol());
+        return getApplication().getString(
+                R.string.swap_pool_note,
+                getAssetSymbol(),
+                walletRepository.getSelectedNetwork().getDisplayName()
+        );
     }
 
     private BigDecimal applySlippage(BigDecimal amountOut) {
@@ -334,6 +360,105 @@ public class SwapViewModel extends AndroidViewModel {
                         BuildConfig.IDRX_TOKEN_ADDRESS,
                         BuildConfig.IDRX_SWAP_POOL_ADDRESS,
                         18
+                );
+            case USDT:
+                return presetConfig(
+                        Asset.USDT,
+                        "USDT",
+                        "Tether USD",
+                        BuildConfig.SWAP_USDT_TOKEN_ADDRESS,
+                        BuildConfig.SWAP_USDT_POOL_ADDRESS,
+                        BuildConfig.SWAP_USDT_DECIMALS
+                );
+            case USDC:
+                return presetConfig(
+                        Asset.USDC,
+                        "USDC",
+                        "USD Coin",
+                        BuildConfig.SWAP_USDC_TOKEN_ADDRESS,
+                        BuildConfig.SWAP_USDC_POOL_ADDRESS,
+                        BuildConfig.SWAP_USDC_DECIMALS
+                );
+            case DAI:
+                return presetConfig(
+                        Asset.DAI,
+                        "DAI",
+                        "Dai Stablecoin",
+                        BuildConfig.SWAP_DAI_TOKEN_ADDRESS,
+                        BuildConfig.SWAP_DAI_POOL_ADDRESS,
+                        BuildConfig.SWAP_DAI_DECIMALS
+                );
+            case WBTC:
+                return presetConfig(
+                        Asset.WBTC,
+                        "WBTC",
+                        "Wrapped Bitcoin",
+                        BuildConfig.SWAP_WBTC_TOKEN_ADDRESS,
+                        BuildConfig.SWAP_WBTC_POOL_ADDRESS,
+                        BuildConfig.SWAP_WBTC_DECIMALS
+                );
+            case LINK:
+                return presetConfig(
+                        Asset.LINK,
+                        "LINK",
+                        "Chainlink",
+                        BuildConfig.SWAP_LINK_TOKEN_ADDRESS,
+                        BuildConfig.SWAP_LINK_POOL_ADDRESS,
+                        BuildConfig.SWAP_LINK_DECIMALS
+                );
+            case UNI:
+                return presetConfig(
+                        Asset.UNI,
+                        "UNI",
+                        "Uniswap",
+                        BuildConfig.SWAP_UNI_TOKEN_ADDRESS,
+                        BuildConfig.SWAP_UNI_POOL_ADDRESS,
+                        BuildConfig.SWAP_UNI_DECIMALS
+                );
+            case AAVE:
+                return presetConfig(
+                        Asset.AAVE,
+                        "AAVE",
+                        "Aave",
+                        BuildConfig.SWAP_AAVE_TOKEN_ADDRESS,
+                        BuildConfig.SWAP_AAVE_POOL_ADDRESS,
+                        BuildConfig.SWAP_AAVE_DECIMALS
+                );
+            case SHIB:
+                return presetConfig(
+                        Asset.SHIB,
+                        "SHIB",
+                        "Shiba Inu",
+                        BuildConfig.SWAP_SHIB_TOKEN_ADDRESS,
+                        BuildConfig.SWAP_SHIB_POOL_ADDRESS,
+                        BuildConfig.SWAP_SHIB_DECIMALS
+                );
+            case PEPE:
+                return presetConfig(
+                        Asset.PEPE,
+                        "PEPE",
+                        "Pepe",
+                        BuildConfig.SWAP_PEPE_TOKEN_ADDRESS,
+                        BuildConfig.SWAP_PEPE_POOL_ADDRESS,
+                        BuildConfig.SWAP_PEPE_DECIMALS
+                );
+            case ARB:
+                return presetConfig(
+                        Asset.ARB,
+                        "ARB",
+                        "Arbitrum",
+                        BuildConfig.SWAP_ARB_TOKEN_ADDRESS,
+                        BuildConfig.SWAP_ARB_POOL_ADDRESS,
+                        BuildConfig.SWAP_ARB_DECIMALS
+                );
+            case OP:
+                return presetConfig(
+                        Asset.OP,
+                        "OP",
+                        "Optimism",
+                        BuildConfig.SWAP_OP_TOKEN_ADDRESS,
+                        BuildConfig.SWAP_OP_POOL_ADDRESS,
+                        BuildConfig.SWAP_OP_DECIMALS
                 );
             case CUSTOM_1:
                 return customConfig(
@@ -385,6 +510,76 @@ public class SwapViewModel extends AndroidViewModel {
                         BuildConfig.SWAP_TOKEN_5_DECIMALS,
                         "TOKEN5"
                 );
+            case CUSTOM_6:
+                return customConfig(
+                        Asset.CUSTOM_6,
+                        BuildConfig.SWAP_TOKEN_6_SYMBOL,
+                        BuildConfig.SWAP_TOKEN_6_NAME,
+                        BuildConfig.SWAP_TOKEN_6_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_6_POOL_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_6_DECIMALS,
+                        "TOKEN6"
+                );
+            case CUSTOM_7:
+                return customConfig(
+                        Asset.CUSTOM_7,
+                        BuildConfig.SWAP_TOKEN_7_SYMBOL,
+                        BuildConfig.SWAP_TOKEN_7_NAME,
+                        BuildConfig.SWAP_TOKEN_7_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_7_POOL_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_7_DECIMALS,
+                        "TOKEN7"
+                );
+            case CUSTOM_8:
+                return customConfig(
+                        Asset.CUSTOM_8,
+                        BuildConfig.SWAP_TOKEN_8_SYMBOL,
+                        BuildConfig.SWAP_TOKEN_8_NAME,
+                        BuildConfig.SWAP_TOKEN_8_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_8_POOL_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_8_DECIMALS,
+                        "TOKEN8"
+                );
+            case CUSTOM_9:
+                return customConfig(
+                        Asset.CUSTOM_9,
+                        BuildConfig.SWAP_TOKEN_9_SYMBOL,
+                        BuildConfig.SWAP_TOKEN_9_NAME,
+                        BuildConfig.SWAP_TOKEN_9_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_9_POOL_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_9_DECIMALS,
+                        "TOKEN9"
+                );
+            case CUSTOM_10:
+                return customConfig(
+                        Asset.CUSTOM_10,
+                        BuildConfig.SWAP_TOKEN_10_SYMBOL,
+                        BuildConfig.SWAP_TOKEN_10_NAME,
+                        BuildConfig.SWAP_TOKEN_10_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_10_POOL_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_10_DECIMALS,
+                        "TOKEN10"
+                );
+            case CUSTOM_11:
+                return customConfig(
+                        Asset.CUSTOM_11,
+                        BuildConfig.SWAP_TOKEN_11_SYMBOL,
+                        BuildConfig.SWAP_TOKEN_11_NAME,
+                        BuildConfig.SWAP_TOKEN_11_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_11_POOL_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_11_DECIMALS,
+                        "TOKEN11"
+                );
+            case CUSTOM_12:
+                return customConfig(
+                        Asset.CUSTOM_12,
+                        BuildConfig.SWAP_TOKEN_12_SYMBOL,
+                        BuildConfig.SWAP_TOKEN_12_NAME,
+                        BuildConfig.SWAP_TOKEN_12_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_12_POOL_ADDRESS,
+                        BuildConfig.SWAP_TOKEN_12_DECIMALS,
+                        "TOKEN12"
+                );
             case MATS:
             default:
                 return new SwapAssetConfig(
@@ -407,6 +602,37 @@ public class SwapViewModel extends AndroidViewModel {
         return Asset.MATS;
     }
 
+    private boolean isVisibleAsset(Asset asset) {
+        if (asset == null) {
+            return false;
+        }
+        switch (asset) {
+            case CUSTOM_1:
+            case CUSTOM_2:
+            case CUSTOM_3:
+            case CUSTOM_4:
+            case CUSTOM_5:
+            case CUSTOM_6:
+            case CUSTOM_7:
+            case CUSTOM_8:
+            case CUSTOM_9:
+            case CUSTOM_10:
+            case CUSTOM_11:
+            case CUSTOM_12:
+                SwapAssetConfig config = getConfig(asset);
+                return hasSwapConfig(config)
+                        || !safeString(config.symbol).startsWith("TOKEN")
+                        || !safeString(config.name).startsWith(config.symbol + " Token");
+            default:
+                return true;
+        }
+    }
+
+    private SwapAssetConfig presetConfig(Asset asset, String symbol, String name, String tokenAddress,
+                                         String poolAddress, int decimals) {
+        return new SwapAssetConfig(asset, symbol, name, tokenAddress, poolAddress, Math.max(decimals, 0));
+    }
+
     private SwapAssetConfig customConfig(Asset asset, String rawSymbol, String rawName, String tokenAddress,
                                          String poolAddress, int decimals, String fallbackSymbol) {
         String symbol = safeString(rawSymbol).isEmpty() ? fallbackSymbol : safeString(rawSymbol).toUpperCase();
@@ -423,5 +649,12 @@ public class SwapViewModel extends AndroidViewModel {
             return value == null ? "" : value;
         }
         return value.substring(0, 6) + "..." + value.substring(value.length() - 4);
+    }
+
+    private String buildExplorerTxUrl(EthereumNetwork network, String transactionHash) {
+        if (network != null && network.hasExplorerUrl()) {
+            return network.getExplorerTxBaseUrl() + transactionHash;
+        }
+        return "";
     }
 }

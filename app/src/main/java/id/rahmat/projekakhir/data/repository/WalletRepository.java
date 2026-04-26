@@ -3,7 +3,9 @@ package id.rahmat.projekakhir.data.repository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import id.rahmat.projekakhir.BuildConfig;
 import id.rahmat.projekakhir.utils.FormatUtils;
@@ -21,6 +23,25 @@ public class WalletRepository {
     private final EthereumService ethereumService;
     private final PriceRepository priceRepository;
     private final AppPreferences appPreferences;
+
+    private static class TrackedSwapToken {
+        final String name;
+        final String symbol;
+        final String tokenAddress;
+        final String poolAddress;
+        final int decimals;
+        final String imageUrl;
+
+        TrackedSwapToken(String name, String symbol, String tokenAddress, String poolAddress,
+                         int decimals, String imageUrl) {
+            this.name = name;
+            this.symbol = symbol;
+            this.tokenAddress = tokenAddress;
+            this.poolAddress = poolAddress;
+            this.decimals = decimals;
+            this.imageUrl = imageUrl;
+        }
+    }
 
     public WalletRepository(WalletManager walletManager, EthereumService ethereumService,
                             PriceRepository priceRepository, AppPreferences appPreferences) {
@@ -140,42 +161,205 @@ public class WalletRepository {
         }
         List<TokenBalance> tokens = new ArrayList<>();
         PriceRepository.PriceSnapshot nativePrice = priceRepository.getLatestPrice(network);
+        Set<String> addedAddresses = new LinkedHashSet<>();
 
-        if (BuildConfig.MATS_TOKEN_ADDRESS != null && !BuildConfig.MATS_TOKEN_ADDRESS.isEmpty()) {
-            int matsDecimals = 18;
-            BigDecimal matsBalance = ethereumService.getErc20Balance(walletAddress, BuildConfig.MATS_TOKEN_ADDRESS, matsDecimals, network);
-            BigDecimal matsUnitPriceEth = BigDecimal.ZERO;
-            if (BuildConfig.MATS_SWAP_POOL_ADDRESS != null && !BuildConfig.MATS_SWAP_POOL_ADDRESS.isEmpty()) {
-                matsUnitPriceEth = ethereumService.quoteMatsToEth(BigDecimal.ONE, network);
+        for (TrackedSwapToken token : getTrackedSwapTokens()) {
+            if (!hasAddress(token.tokenAddress) || addedAddresses.contains(token.tokenAddress.toLowerCase())) {
+                continue;
             }
-            tokens.add(new TokenBalance(
-                    "Mats Token",
-                    network.getDisplayName(),
-                    "MATS",
-                    matsBalance,
-                    "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
-                    FormatUtils.safeMultiply(matsUnitPriceEth, nativePrice.idr),
-                    FormatUtils.safeMultiply(matsUnitPriceEth, nativePrice.usd),
-                    false
-            ));
+
+            tokens.add(loadTrackedTokenBalance(walletAddress, network, nativePrice, token));
+            addedAddresses.add(token.tokenAddress.toLowerCase());
         }
 
-        if (BuildConfig.IDRX_TOKEN_ADDRESS != null && !BuildConfig.IDRX_TOKEN_ADDRESS.isEmpty()) {
-            int idrxDecimals = ethereumService.getErc20Decimals(BuildConfig.IDRX_TOKEN_ADDRESS, network);
-            String idrxSymbol = ethereumService.getErc20Symbol(BuildConfig.IDRX_TOKEN_ADDRESS, network);
-            BigDecimal idrxBalance = ethereumService.getErc20Balance(walletAddress, BuildConfig.IDRX_TOKEN_ADDRESS, idrxDecimals, network);
-            BigDecimal idrxUnitPriceIdr = "IDRX".equalsIgnoreCase(idrxSymbol) ? BigDecimal.ONE : BigDecimal.ZERO;
-            tokens.add(new TokenBalance(
-                    "IDRX Token",
+        return tokens;
+    }
+
+    private TokenBalance loadTrackedTokenBalance(String walletAddress, EthereumNetwork network,
+                                                 PriceRepository.PriceSnapshot nativePrice,
+                                                 TrackedSwapToken token) {
+        try {
+            BigDecimal balance = ethereumService.getErc20Balance(
+                    walletAddress,
+                    token.tokenAddress,
+                    token.decimals,
+                    network
+            );
+            BigDecimal unitPriceEth = hasAddress(token.poolAddress)
+                    ? ethereumService.quoteTokenToEth(BigDecimal.ONE, token.decimals, token.poolAddress, network)
+                    : BigDecimal.ZERO;
+            return new TokenBalance(
+                    token.name,
                     network.getDisplayName(),
-                    idrxSymbol == null || idrxSymbol.isEmpty() ? "IDRX" : idrxSymbol,
-                    idrxBalance,
-                    null,
-                    idrxUnitPriceIdr,
+                    token.symbol,
+                    balance,
+                    token.imageUrl,
+                    FormatUtils.safeMultiply(unitPriceEth, nativePrice.idr),
+                    FormatUtils.safeMultiply(unitPriceEth, nativePrice.usd),
+                    false
+            );
+        } catch (Exception exception) {
+            return new TokenBalance(
+                    token.name,
+                    network.getDisplayName(),
+                    token.symbol,
+                    BigDecimal.ZERO,
+                    token.imageUrl,
+                    BigDecimal.ZERO,
                     BigDecimal.ZERO,
                     false
-            ));
+            );
         }
+    }
+
+    private List<TrackedSwapToken> getTrackedSwapTokens() {
+        List<TrackedSwapToken> tokens = new ArrayList<>();
+        tokens.add(new TrackedSwapToken(
+                "Mats Token",
+                "MATS",
+                BuildConfig.MATS_TOKEN_ADDRESS,
+                BuildConfig.MATS_SWAP_POOL_ADDRESS,
+                18,
+                null
+        ));
+        tokens.add(new TrackedSwapToken(
+                "IDRX Token",
+                "IDRX",
+                BuildConfig.IDRX_TOKEN_ADDRESS,
+                BuildConfig.IDRX_SWAP_POOL_ADDRESS,
+                18,
+                null
+        ));
+        tokens.add(new TrackedSwapToken(
+                "Tether USD",
+                "USDT",
+                BuildConfig.SWAP_USDT_TOKEN_ADDRESS,
+                BuildConfig.SWAP_USDT_POOL_ADDRESS,
+                BuildConfig.SWAP_USDT_DECIMALS,
+                null
+        ));
+        tokens.add(new TrackedSwapToken(
+                "USD Coin",
+                "USDC",
+                BuildConfig.SWAP_USDC_TOKEN_ADDRESS,
+                BuildConfig.SWAP_USDC_POOL_ADDRESS,
+                BuildConfig.SWAP_USDC_DECIMALS,
+                null
+        ));
+        tokens.add(new TrackedSwapToken(
+                "Dai Stablecoin",
+                "DAI",
+                BuildConfig.SWAP_DAI_TOKEN_ADDRESS,
+                BuildConfig.SWAP_DAI_POOL_ADDRESS,
+                BuildConfig.SWAP_DAI_DECIMALS,
+                null
+        ));
+        tokens.add(new TrackedSwapToken(
+                "Wrapped Bitcoin",
+                "WBTC",
+                BuildConfig.SWAP_WBTC_TOKEN_ADDRESS,
+                BuildConfig.SWAP_WBTC_POOL_ADDRESS,
+                BuildConfig.SWAP_WBTC_DECIMALS,
+                null
+        ));
+        tokens.add(new TrackedSwapToken(
+                "Chainlink",
+                "LINK",
+                BuildConfig.SWAP_LINK_TOKEN_ADDRESS,
+                BuildConfig.SWAP_LINK_POOL_ADDRESS,
+                BuildConfig.SWAP_LINK_DECIMALS,
+                null
+        ));
+        tokens.add(new TrackedSwapToken(
+                "Uniswap",
+                "UNI",
+                BuildConfig.SWAP_UNI_TOKEN_ADDRESS,
+                BuildConfig.SWAP_UNI_POOL_ADDRESS,
+                BuildConfig.SWAP_UNI_DECIMALS,
+                null
+        ));
+        tokens.add(new TrackedSwapToken(
+                "Aave",
+                "AAVE",
+                BuildConfig.SWAP_AAVE_TOKEN_ADDRESS,
+                BuildConfig.SWAP_AAVE_POOL_ADDRESS,
+                BuildConfig.SWAP_AAVE_DECIMALS,
+                null
+        ));
+        tokens.add(new TrackedSwapToken(
+                "Shiba Inu",
+                "SHIB",
+                BuildConfig.SWAP_SHIB_TOKEN_ADDRESS,
+                BuildConfig.SWAP_SHIB_POOL_ADDRESS,
+                BuildConfig.SWAP_SHIB_DECIMALS,
+                null
+        ));
+        tokens.add(new TrackedSwapToken(
+                "Pepe",
+                "PEPE",
+                BuildConfig.SWAP_PEPE_TOKEN_ADDRESS,
+                BuildConfig.SWAP_PEPE_POOL_ADDRESS,
+                BuildConfig.SWAP_PEPE_DECIMALS,
+                null
+        ));
+        tokens.add(new TrackedSwapToken(
+                "Arbitrum",
+                "ARB",
+                BuildConfig.SWAP_ARB_TOKEN_ADDRESS,
+                BuildConfig.SWAP_ARB_POOL_ADDRESS,
+                BuildConfig.SWAP_ARB_DECIMALS,
+                null
+        ));
+        tokens.add(new TrackedSwapToken(
+                "Optimism",
+                "OP",
+                BuildConfig.SWAP_OP_TOKEN_ADDRESS,
+                BuildConfig.SWAP_OP_POOL_ADDRESS,
+                BuildConfig.SWAP_OP_DECIMALS,
+                null
+        ));
+        addCustomTrackedToken(tokens, BuildConfig.SWAP_TOKEN_1_NAME, BuildConfig.SWAP_TOKEN_1_SYMBOL,
+                BuildConfig.SWAP_TOKEN_1_ADDRESS, BuildConfig.SWAP_TOKEN_1_POOL_ADDRESS, BuildConfig.SWAP_TOKEN_1_DECIMALS);
+        addCustomTrackedToken(tokens, BuildConfig.SWAP_TOKEN_2_NAME, BuildConfig.SWAP_TOKEN_2_SYMBOL,
+                BuildConfig.SWAP_TOKEN_2_ADDRESS, BuildConfig.SWAP_TOKEN_2_POOL_ADDRESS, BuildConfig.SWAP_TOKEN_2_DECIMALS);
+        addCustomTrackedToken(tokens, BuildConfig.SWAP_TOKEN_3_NAME, BuildConfig.SWAP_TOKEN_3_SYMBOL,
+                BuildConfig.SWAP_TOKEN_3_ADDRESS, BuildConfig.SWAP_TOKEN_3_POOL_ADDRESS, BuildConfig.SWAP_TOKEN_3_DECIMALS);
+        addCustomTrackedToken(tokens, BuildConfig.SWAP_TOKEN_4_NAME, BuildConfig.SWAP_TOKEN_4_SYMBOL,
+                BuildConfig.SWAP_TOKEN_4_ADDRESS, BuildConfig.SWAP_TOKEN_4_POOL_ADDRESS, BuildConfig.SWAP_TOKEN_4_DECIMALS);
+        addCustomTrackedToken(tokens, BuildConfig.SWAP_TOKEN_5_NAME, BuildConfig.SWAP_TOKEN_5_SYMBOL,
+                BuildConfig.SWAP_TOKEN_5_ADDRESS, BuildConfig.SWAP_TOKEN_5_POOL_ADDRESS, BuildConfig.SWAP_TOKEN_5_DECIMALS);
+        addCustomTrackedToken(tokens, BuildConfig.SWAP_TOKEN_6_NAME, BuildConfig.SWAP_TOKEN_6_SYMBOL,
+                BuildConfig.SWAP_TOKEN_6_ADDRESS, BuildConfig.SWAP_TOKEN_6_POOL_ADDRESS, BuildConfig.SWAP_TOKEN_6_DECIMALS);
+        addCustomTrackedToken(tokens, BuildConfig.SWAP_TOKEN_7_NAME, BuildConfig.SWAP_TOKEN_7_SYMBOL,
+                BuildConfig.SWAP_TOKEN_7_ADDRESS, BuildConfig.SWAP_TOKEN_7_POOL_ADDRESS, BuildConfig.SWAP_TOKEN_7_DECIMALS);
+        addCustomTrackedToken(tokens, BuildConfig.SWAP_TOKEN_8_NAME, BuildConfig.SWAP_TOKEN_8_SYMBOL,
+                BuildConfig.SWAP_TOKEN_8_ADDRESS, BuildConfig.SWAP_TOKEN_8_POOL_ADDRESS, BuildConfig.SWAP_TOKEN_8_DECIMALS);
+        addCustomTrackedToken(tokens, BuildConfig.SWAP_TOKEN_9_NAME, BuildConfig.SWAP_TOKEN_9_SYMBOL,
+                BuildConfig.SWAP_TOKEN_9_ADDRESS, BuildConfig.SWAP_TOKEN_9_POOL_ADDRESS, BuildConfig.SWAP_TOKEN_9_DECIMALS);
+        addCustomTrackedToken(tokens, BuildConfig.SWAP_TOKEN_10_NAME, BuildConfig.SWAP_TOKEN_10_SYMBOL,
+                BuildConfig.SWAP_TOKEN_10_ADDRESS, BuildConfig.SWAP_TOKEN_10_POOL_ADDRESS, BuildConfig.SWAP_TOKEN_10_DECIMALS);
+        addCustomTrackedToken(tokens, BuildConfig.SWAP_TOKEN_11_NAME, BuildConfig.SWAP_TOKEN_11_SYMBOL,
+                BuildConfig.SWAP_TOKEN_11_ADDRESS, BuildConfig.SWAP_TOKEN_11_POOL_ADDRESS, BuildConfig.SWAP_TOKEN_11_DECIMALS);
+        addCustomTrackedToken(tokens, BuildConfig.SWAP_TOKEN_12_NAME, BuildConfig.SWAP_TOKEN_12_SYMBOL,
+                BuildConfig.SWAP_TOKEN_12_ADDRESS, BuildConfig.SWAP_TOKEN_12_POOL_ADDRESS, BuildConfig.SWAP_TOKEN_12_DECIMALS);
         return tokens;
+    }
+
+    private void addCustomTrackedToken(List<TrackedSwapToken> tokens, String name, String symbol,
+                                       String tokenAddress, String poolAddress, int decimals) {
+        if (!hasAddress(tokenAddress)) {
+            return;
+        }
+        String safeSymbol = safeString(symbol).isEmpty() ? "TOKEN" : safeString(symbol).toUpperCase();
+        String safeName = safeString(name).isEmpty() ? safeSymbol + " Token" : safeString(name);
+        tokens.add(new TrackedSwapToken(safeName, safeSymbol, tokenAddress, poolAddress, Math.max(decimals, 0), null));
+    }
+
+    private boolean hasAddress(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+    private String safeString(String value) {
+        return value == null ? "" : value.trim();
     }
 }
